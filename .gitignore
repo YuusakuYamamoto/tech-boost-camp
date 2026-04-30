@@ -1,0 +1,20 @@
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+tfplan
+*.tfplan
+
+# OCI 認証情報
+*.pem
+.oci/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# mise (個人のローカル上書きのみ ignore。共有の .mise.toml はコミットする)
+.mise.local.toml

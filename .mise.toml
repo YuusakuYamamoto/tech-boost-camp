@@ -1,0 +1,10 @@
+[tools]
+terraform      = "1.14.9" # OCI native backend requires >= 1.12
+node           = "24.15.0" # Active LTS
+pnpm           = "11.0.0"
+tflint         = "0.62.0"
+terraform-docs = "0.22.0"
+
+[settings]
+# .terraform-version をフォールバックとして読む
+idiomatic_version_file_enable_tools = ["terraform"]
