@@ -7,6 +7,13 @@ crash.*.log
 tfplan
 *.tfplan
 
+# Terraform variable files (contain OCIDs that we don't expose on this public repo).
+# Use terraform.tfvars.example as a template; copy it to terraform.tfvars and fill in values.
+# In CI/CD, values are injected via GitHub Variables instead.
+terraform/terraform.tfvars
+terraform/*.auto.tfvars
+terraform/*.auto.tfvars.json
+
 # OCI 認証情報
 *.pem
 .oci/
@@ -16,5 +23,5 @@ tfplan
 .idea/
 .vscode/
 
-# mise (個人のローカル上書きのみ ignore。共有の .mise.toml はコミットする)
+# mise
 .mise.local.toml

@@ -1,0 +1,13 @@
+# Copy this file to terraform.tfvars and fill in your own OCI values.
+# terraform.tfvars is gitignored; do not commit it.
+
+# OCI region (e.g., ap-tokyo-1, us-ashburn-1)
+region = "ap-tokyo-1"
+
+# Your tenancy OCID
+# Find at: OCI Console > User profile menu > Tenancy: <name> > OCID
+tenancy_id = "ocid1.tenancy.oc1..xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Compartment OCID where resources will be created (tbcamp compartment)
+# Find at: OCI Console > Identity & Security > Compartments > tbcamp > OCID
+compartment_id = "ocid1.compartment.oc1..xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
