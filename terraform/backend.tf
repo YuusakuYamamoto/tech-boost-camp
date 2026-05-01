@@ -16,9 +16,9 @@
 #     to keep parity with provider-side auth (least privilege).
 terraform {
   backend "oci" {
-    bucket              = "terraform-state"
-    key                 = "tbcamp/terraform.tfstate"
-    region              = "ap-tokyo-1"
+    bucket = "terraform-state"
+    key    = "tbcamp/terraform.tfstate"
+    region = "ap-tokyo-1"
     # namespace, config_file_profile はローカル/CI で異なるため partial configuration
     # ローカル: backend.hcl で指定
     # CI: namespace は -backend-config 引数、認証は OCI_CLI_* 環境変数
