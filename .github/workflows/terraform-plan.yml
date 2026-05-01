@@ -1,0 +1,101 @@
+name: Terraform Plan
+
+on:
+  pull_request:
+    branches:
+      - main
+      - 'deployment/infra/**'
+    paths:
+      - 'terraform/**/*.tf'
+      - 'terraform/**/*.tfvars'
+      - 'terraform/.terraform.lock.hcl'
+      - '.github/workflows/terraform-*.yml'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+    env:
+      # Terraform に渡す変数(TF_VAR_<name> は variable "<name>" に対応)
+      TF_VAR_region: ${{ vars.OCI_REGION }}
+      TF_VAR_tenancy_id: ${{ vars.OCI_TENANCY_OCID }}
+      TF_VAR_compartment_id: ${{ vars.OCI_COMPARTMENT_OCID }}
+      # OCI provider が認証に使う環境変数(~/.oci/config の代替)
+      OCI_CLI_TENANCY: ${{ vars.OCI_TENANCY_OCID }}
+      OCI_CLI_USER: ${{ secrets.OCI_USER_OCID }}
+      OCI_CLI_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
+      OCI_CLI_KEY_CONTENT: ${{ secrets.OCI_PRIVATE_KEY }}
+      OCI_CLI_REGION: ${{ vars.OCI_REGION }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        # terraform_version を指定しないことで .terraform-version を自動参照
+
+      - name: Terraform fmt
+        run: terraform fmt -check -recursive
+        working-directory: .
+
+      - name: Terraform init
+        run: |
+          terraform init \
+            -backend-config="namespace=${{ vars.OCI_NAMESPACE }}" \
+            -lockfile=readonly
+
+      - name: Terraform validate
+        run: terraform validate
+
+      - name: Terraform plan
+        id: plan
+        run: |
+          set -o pipefail
+          terraform plan -no-color -input=false -out=tfplan 2>&1 | tee plan_output.txt
+          {
+            echo 'PLAN_OUTPUT<<EOF'
+            cat plan_output.txt
+            echo 'EOF'
+          } >> "$GITHUB_ENV"
+
+      - name: Comment PR with plan
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const planOutput = process.env.PLAN_OUTPUT || '(no plan output captured)';
+            const maxLength = 60000;
+            const body = planOutput.length > maxLength
+              ? planOutput.slice(0, maxLength) + `\n\n... (truncated, ${planOutput.length - maxLength} chars omitted)`
+              : planOutput;
+
+            const outcome = '${{ steps.plan.outcome }}';
+            const icon = outcome === 'success' ? '✅' : '❌';
+            const header = `## ${icon} Terraform Plan: \`${outcome}\``;
+
+            const commentBody = [
+              header,
+              '',
+              '<details><summary>Show plan output</summary>',
+              '',
+              '```hcl',
+              body,
+              '```',
+              '',
+              '</details>',
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: commentBody,
+            });
