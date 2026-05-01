@@ -10,3 +10,4 @@
 #   terraform init -backend-config=backend.hcl
 
 namespace = "your-object-storage-namespace"
+config_file_profile = "<your-oci-config-profile-name>"
