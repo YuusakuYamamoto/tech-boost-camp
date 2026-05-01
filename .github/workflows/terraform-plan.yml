@@ -27,12 +27,7 @@ jobs:
       TF_VAR_region: ${{ vars.OCI_REGION }}
       TF_VAR_tenancy_id: ${{ vars.OCI_TENANCY_OCID }}
       TF_VAR_compartment_id: ${{ vars.OCI_COMPARTMENT_OCID }}
-      # OCI provider が認証に使う環境変数(~/.oci/config の代替)
-      OCI_CLI_TENANCY: ${{ vars.OCI_TENANCY_OCID }}
-      OCI_CLI_USER: ${{ secrets.OCI_USER_OCID }}
-      OCI_CLI_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
-      OCI_CLI_KEY_CONTENT: ${{ secrets.OCI_PRIVATE_KEY }}
-      OCI_CLI_REGION: ${{ vars.OCI_REGION }}
+      # OCI への認証は ~/.oci/config 経由(Setup OCI config step で生成)
 
     steps:
       - name: Checkout
@@ -42,6 +37,25 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         # terraform_version を指定しないことで .terraform-version を自動参照
 
+      - name: Setup OCI config
+        # private key を file に書き出し
+        # config ファイルを生成(プロファイル名はローカルと揃える: TBCAMP_TERRAFORM)
+        run: |
+          mkdir -p ~/.oci
+          cat > ~/.oci/tbcamp-github-actions.pem <<'EOF'
+          ${{ secrets.OCI_PRIVATE_KEY }}
+          EOF
+          chmod 600 ~/.oci/tbcamp-github-actions.pem
+          cat > ~/.oci/config <<EOF
+          [TBCAMP_TERRAFORM]
+          user=${{ secrets.OCI_USER_OCID }}
+          fingerprint=${{ secrets.OCI_FINGERPRINT }}
+          tenancy=${{ vars.OCI_TENANCY_OCID }}
+          region=${{ vars.OCI_REGION }}
+          key_file=$HOME/.oci/tbcamp-github-actions.pem
+          EOF
+          chmod 600 ~/.oci/config
+
       - name: Terraform fmt
         run: terraform fmt -check -recursive
         working-directory: .
@@ -50,6 +64,7 @@ jobs:
         run: |
           terraform init \
             -backend-config="namespace=${{ vars.OCI_NAMESPACE }}" \
+            -backend-config="config_file_profile=TBCAMP_TERRAFORM" \
             -lockfile=readonly
 
       - name: Terraform validate
