@@ -1,0 +1,12 @@
+# Partial backend configuration for the OCI native backend.
+#
+# Copy this file to backend.hcl and fill in your namespace.
+# backend.hcl is gitignored to keep environment-specific values out of the public repo.
+#
+# How to get your namespace:
+#   oci os ns get --profile TBCAMP_TERRAFORM --query 'data' --raw-output
+#
+# How to use this file with terraform:
+#   terraform init -backend-config=backend.hcl
+
+namespace = "your-object-storage-namespace"

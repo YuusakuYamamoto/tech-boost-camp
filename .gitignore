@@ -13,6 +13,8 @@ tfplan
 terraform/terraform.tfvars
 terraform/*.auto.tfvars
 terraform/*.auto.tfvars.json
+# Backend partial configuration (contains namespace and other env-specific values)
+terraform/backend.hcl
 
 # OCI 認証情報
 *.pem
