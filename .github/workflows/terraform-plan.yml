@@ -119,8 +119,9 @@ jobs:
         run: |
           terraform init \
             -backend-config="namespace=${{ vars.OCI_NAMESPACE }}" \
-            -backend-config="config_file_profile=TBCAMP_TERRAFORM" \
             -backend-config="auth=SecurityToken" \
+            -backend-config="security_token_file=$HOME/.oci/upst-token" \
+            -backend-config="key_file=$HOME/.oci/session-key.pem" \
             -lockfile=readonly
 
       - name: Terraform plan
