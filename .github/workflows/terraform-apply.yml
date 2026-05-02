@@ -52,7 +52,8 @@ jobs:
           openssl rsa -pubout -in "$PRIVATE_KEY_FILE" -out "$PUBLIC_KEY_FILE" 2>/dev/null
           chmod 600 "$PRIVATE_KEY_FILE"
 
-          PUBLIC_KEY=$(cat "$PUBLIC_KEY_FILE" | tr -d '\n')
+          # 公開鍵から PEM ヘッダー/フッターを除去し、base64 本体のみ取得
+          PUBLIC_KEY=$(grep -v "^-----" "$PUBLIC_KEY_FILE" | tr -d '\n')
 
           # 2. GitHub OIDC JWT を取得
           GITHUB_JWT=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
