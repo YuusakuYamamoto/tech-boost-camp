@@ -118,7 +118,7 @@ jobs:
           terraform init \
             -backend-config="namespace=${{ vars.OCI_NAMESPACE }}" \
             -backend-config="config_file_profile=TBCAMP_TERRAFORM" \
-            -backend-config="auth=security_token"
+            -backend-config="auth=SecurityToken"
 
       - name: Terraform plan
         run: terraform plan -out=tfplan
