@@ -105,6 +105,7 @@ jobs:
             echo "[TBCAMP_TERRAFORM]"
             echo "tenancy=${{ vars.OCI_TENANCY_OCID }}"
             echo "region=${{ vars.OCI_REGION }}"
+            echo "auth=SecurityToken"
             echo "security_token_file=${UPST_FILE}"
             echo "key_file=${PRIVATE_KEY_FILE}"
           } > "$HOME/.oci/config"
