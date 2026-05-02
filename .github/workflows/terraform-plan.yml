@@ -64,9 +64,6 @@ jobs:
           fi
           echo "GitHub OIDC token obtained successfully"
 
-          # debug: JWT の sub クレームを確認
-          echo "::warning::JWT sub claim: $(echo "$GITHUB_JWT" | cut -d. -f2 | base64 -d 2>/dev/null | jq -r '.sub')"
-
           # 3. OCI Token Exchange: GitHub JWT → UPST
           CLIENT_CREDENTIALS=$(echo -n "${{ vars.OCI_CLIENT_ID }}:${{ secrets.OCI_CLIENT_SECRET }}" | base64 -w 0)
 
@@ -79,9 +76,6 @@ jobs:
             --data-urlencode "subject_token=${GITHUB_JWT}" \
             --data-urlencode "subject_token_type=jwt" \
             --data-urlencode "public_key=${PUBLIC_KEY}")
-
-          # -- debug: レスポンス全体を出力（トラブルシュート後に削除）
-          echo "::warning::Token exchange response: $(echo "$RESPONSE" | jq -c '.')"
 
           UPST=$(echo "$RESPONSE" | jq -r '.token // .access_token')
           TOKEN_TYPE=$(echo "$RESPONSE" | jq -r '.token_type // "UPST"')
@@ -111,7 +105,7 @@ jobs:
           } > "$HOME/.oci/config"
           chmod 600 "$HOME/.oci/config"
 
-          echo "OCI config written with security_token auth"
+          echo "OCI config written with SecurityToken auth"
 
       - name: Terraform fmt
         run: terraform fmt -check -recursive
