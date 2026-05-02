@@ -73,7 +73,7 @@ jobs:
             -d "subject_token=${GITHUB_JWT}" \
             -d "subject_token_type=urn:ietf:params:oauth:token-type:jwt" \
             -d "requested_token_type=urn:oci:token-type:oci-upst" \
-            -d "public_key=${PUBLIC_KEY}")
+            --data-urlencode "public_key=${PUBLIC_KEY}")
 
           UPST=$(echo "$RESPONSE" | jq -r '.access_token')
           TOKEN_TYPE=$(echo "$RESPONSE" | jq -r '.token_type')
