@@ -1,3 +1,5 @@
+# CI test: trigger plan workflow against deployment/infra/main
+
 locals {
   app_name = "tbcamp"
 }
