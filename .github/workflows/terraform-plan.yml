@@ -82,8 +82,8 @@ jobs:
           # -- debug: レスポンス全体を出力（トラブルシュート後に削除）
           echo "::warning::Token exchange response: $(echo "$RESPONSE" | jq -c '.')"
 
-          UPST=$(echo "$RESPONSE" | jq -r '.access_token')
-          TOKEN_TYPE=$(echo "$RESPONSE" | jq -r '.token_type')
+          UPST=$(echo "$RESPONSE" | jq -r '.token // .access_token')
+          TOKEN_TYPE=$(echo "$RESPONSE" | jq -r '.token_type // "UPST"')
 
           if [ -z "$UPST" ] || [ "$UPST" = "null" ]; then
             ERROR_DESC=$(echo "$RESPONSE" | jq -r '.error_description // .error // "Unknown error"')
