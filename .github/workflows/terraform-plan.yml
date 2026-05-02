@@ -95,7 +95,7 @@ jobs:
 
           # 4. UPST をファイルに保存
           UPST_FILE="$HOME/.oci/upst-token"
-          echo "$UPST" > "$UPST_FILE"
+          printf '%s' "$UPST" > "$UPST_FILE"
           chmod 600 "$UPST_FILE"
 
           # 5. ~/.oci/config をセッショントークン認証モードで生成
