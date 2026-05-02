@@ -1,0 +1,73 @@
+name: Terraform Apply
+
+on:
+  push:
+    branches:
+      - 'deployment/infra/**'
+    paths:
+      - 'terraform/**/*.tf'
+      - 'terraform/**/*.tfvars'
+      - 'terraform/.terraform.lock.hcl'
+      - '.github/workflows/terraform-apply.yml'
+
+# 並列 apply を防止(state lock の二重防止)
+# cancel-in-progress: false にすることで後続ジョブはキャンセルせずキューイング
+concurrency:
+  group: terraform-apply
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    environment: production
+    defaults:
+      run:
+        working-directory: terraform
+    env:
+      TF_VAR_region: ${{ vars.OCI_REGION }}
+      TF_VAR_tenancy_id: ${{ vars.OCI_TENANCY_OCID }}
+      TF_VAR_compartment_id: ${{ vars.OCI_COMPARTMENT_OCID }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        # terraform_version を指定しないことで .terraform-version を自動参照
+
+      - name: Setup OCI config
+        run: |
+          mkdir -p ~/.oci
+          cat <<EOF > ~/.oci/config
+          [TBCAMP_TERRAFORM]
+          user=${{ secrets.OCI_USER_OCID }}
+          fingerprint=${{ secrets.OCI_FINGERPRINT }}
+          key_file=~/.oci/keys/tbcamp-github-actions.pem
+          tenancy=${{ vars.OCI_TENANCY_OCID }}
+          region=${{ vars.OCI_REGION }}
+          EOF
+          mkdir -p ~/.oci/keys
+          echo "${{ secrets.OCI_PRIVATE_KEY }}" > ~/.oci/keys/tbcamp-github-actions.pem
+          chmod 600 ~/.oci/keys/tbcamp-github-actions.pem
+          chmod 600 ~/.oci/config
+
+      - name: Terraform init
+        run: |
+          terraform init \
+            -backend-config="namespace=${{ vars.OCI_NAMESPACE }}" \
+            -backend-config="config_file_profile=TBCAMP_TERRAFORM"
+
+      - name: Terraform plan
+        run: terraform plan -out=tfplan
+
+      - name: Terraform apply
+        run: terraform apply -auto-approve tfplan
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::error::Terraform apply failed on deployment/infra/main"
