@@ -99,6 +99,7 @@ jobs:
           chmod 600 "$UPST_FILE"
 
           # 5. ~/.oci/config をセッショントークン認証モードで生成
+          FINGERPRINT=$(openssl rsa -pubout -outform DER -in "$PRIVATE_KEY_FILE" 2>/dev/null | openssl md5 -c | awk '{print $2}')
           {
             echo "[TBCAMP_TERRAFORM]"
             echo "tenancy=${{ vars.OCI_TENANCY_OCID }}"
@@ -106,6 +107,7 @@ jobs:
             echo "auth=SecurityToken"
             echo "security_token_file=${UPST_FILE}"
             echo "key_file=${PRIVATE_KEY_FILE}"
+            echo "fingerprint=${FINGERPRINT}"
           } > "$HOME/.oci/config"
           chmod 600 "$HOME/.oci/config"
 
