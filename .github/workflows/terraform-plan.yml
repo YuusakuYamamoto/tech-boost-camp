@@ -103,7 +103,6 @@ jobs:
             echo "[TBCAMP_TERRAFORM]"
             echo "tenancy=${{ vars.OCI_TENANCY_OCID }}"
             echo "region=${{ vars.OCI_REGION }}"
-            echo "auth=security_token"
             echo "security_token_file=${UPST_FILE}"
             echo "key_file=${PRIVATE_KEY_FILE}"
           } > "$HOME/.oci/config"
@@ -119,9 +118,8 @@ jobs:
         run: |
           terraform init \
             -backend-config="namespace=${{ vars.OCI_NAMESPACE }}" \
+            -backend-config="config_file_profile=TBCAMP_TERRAFORM" \
             -backend-config="auth=SecurityToken" \
-            -backend-config="security_token_file=$HOME/.oci/upst-token" \
-            -backend-config="key_file=$HOME/.oci/session-key.pem" \
             -lockfile=readonly
 
       - name: Terraform plan
