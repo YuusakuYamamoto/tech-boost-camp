@@ -77,6 +77,9 @@ jobs:
             --data-urlencode "subject_token_type=jwt" \
             --data-urlencode "public_key=${PUBLIC_KEY}")
 
+          # -- debug: レスポンス全体を出力（トラブルシュート後に削除）
+          echo "::warning::Token exchange response: $(echo "$RESPONSE" | jq -c '.')"
+
           UPST=$(echo "$RESPONSE" | jq -r '.access_token')
           TOKEN_TYPE=$(echo "$RESPONSE" | jq -r '.token_type')
 
