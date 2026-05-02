@@ -18,6 +18,7 @@ concurrency:
 
 permissions:
   contents: read
+  id-token: write  # GitHub OIDC JWT の取得に必要
 
 jobs:
   apply:
@@ -30,6 +31,7 @@ jobs:
       TF_VAR_region: ${{ vars.OCI_REGION }}
       TF_VAR_tenancy_id: ${{ vars.OCI_TENANCY_OCID }}
       TF_VAR_compartment_id: ${{ vars.OCI_COMPARTMENT_OCID }}
+      TF_VAR_auth: SecurityToken
 
     steps:
       - name: Checkout
@@ -39,21 +41,79 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         # terraform_version を指定しないことで .terraform-version を自動参照
 
-      - name: Setup OCI config
+      - name: Exchange GitHub OIDC token for OCI UPST
         run: |
-          mkdir -p ~/.oci
-          cat <<EOF > ~/.oci/config
-          [TBCAMP_TERRAFORM]
-          user=${{ secrets.OCI_USER_OCID }}
-          fingerprint=${{ secrets.OCI_FINGERPRINT }}
-          key_file=~/.oci/keys/tbcamp-github-actions.pem
-          tenancy=${{ vars.OCI_TENANCY_OCID }}
-          region=${{ vars.OCI_REGION }}
-          EOF
-          mkdir -p ~/.oci/keys
-          echo "${{ secrets.OCI_PRIVATE_KEY }}" > ~/.oci/keys/tbcamp-github-actions.pem
-          chmod 600 ~/.oci/keys/tbcamp-github-actions.pem
-          chmod 600 ~/.oci/config
+          set -euo pipefail
+
+          # 1. 一時 RSA 鍵ペアを生成（UPST の Proof-of-Possession 用）
+          mkdir -p "$HOME/.oci"
+          PRIVATE_KEY_FILE="$HOME/.oci/session-key.pem"
+          PUBLIC_KEY_FILE="$HOME/.oci/session-key-public.pem"
+          openssl genrsa -out "$PRIVATE_KEY_FILE" 2048 2>/dev/null
+          openssl rsa -pubout -in "$PRIVATE_KEY_FILE" -out "$PUBLIC_KEY_FILE" 2>/dev/null
+          chmod 600 "$PRIVATE_KEY_FILE"
+
+          # 公開鍵から PEM ヘッダー/フッターを除去し、base64 本体のみ取得
+          PUBLIC_KEY=$(grep -v "^-----" "$PUBLIC_KEY_FILE" | tr -d '\n')
+
+          # 2. GitHub OIDC JWT を取得
+          GITHUB_JWT=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=${{ vars.OCI_DOMAIN_URL }}" | jq -r '.value')
+
+          if [ -z "$GITHUB_JWT" ] || [ "$GITHUB_JWT" = "null" ]; then
+            echo "::error::Failed to obtain GitHub OIDC token"
+            exit 1
+          fi
+          echo "GitHub OIDC token obtained successfully"
+
+          # debug: JWT の sub クレームを確認
+          echo "::warning::JWT sub claim: $(echo "$GITHUB_JWT" | cut -d. -f2 | base64 -d 2>/dev/null | jq -r '.sub')"
+
+          # 3. OCI Token Exchange: GitHub JWT → UPST
+          CLIENT_CREDENTIALS=$(echo -n "${{ vars.OCI_CLIENT_ID }}:${{ secrets.OCI_CLIENT_SECRET }}" | base64 -w 0)
+
+          RESPONSE=$(curl -s -X POST \
+            "${{ vars.OCI_DOMAIN_URL }}/oauth2/v1/token" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -H "Authorization: Basic ${CLIENT_CREDENTIALS}" \
+            --data-urlencode "grant_type=urn:ietf:params:oauth:grant-type:token-exchange" \
+            --data-urlencode "requested_token_type=urn:oci:token-type:oci-upst" \
+            --data-urlencode "subject_token=${GITHUB_JWT}" \
+            --data-urlencode "subject_token_type=jwt" \
+            --data-urlencode "public_key=${PUBLIC_KEY}")
+
+          # -- debug: レスポンス全体を出力（トラブルシュート後に削除）
+          echo "::warning::Token exchange response: $(echo "$RESPONSE" | jq -c '.')"
+
+          UPST=$(echo "$RESPONSE" | jq -r '.token // .access_token')
+          TOKEN_TYPE=$(echo "$RESPONSE" | jq -r '.token_type // "UPST"')
+
+          if [ -z "$UPST" ] || [ "$UPST" = "null" ]; then
+            ERROR_DESC=$(echo "$RESPONSE" | jq -r '.error_description // .error // "Unknown error"')
+            echo "::error::Token exchange failed: ${ERROR_DESC}"
+            exit 1
+          fi
+          echo "OCI UPST obtained successfully (token_type: ${TOKEN_TYPE})"
+
+          # 4. UPST をファイルに保存
+          UPST_FILE="$HOME/.oci/upst-token"
+          printf '%s' "$UPST" > "$UPST_FILE"
+          chmod 600 "$UPST_FILE"
+
+          # 5. ~/.oci/config をセッショントークン認証モードで生成
+          FINGERPRINT=$(openssl rsa -pubout -outform DER -in "$PRIVATE_KEY_FILE" 2>/dev/null | openssl md5 -c | awk '{print $2}')
+          {
+            echo "[TBCAMP_TERRAFORM]"
+            echo "tenancy=${{ vars.OCI_TENANCY_OCID }}"
+            echo "region=${{ vars.OCI_REGION }}"
+            echo "auth=SecurityToken"
+            echo "security_token_file=${UPST_FILE}"
+            echo "key_file=${PRIVATE_KEY_FILE}"
+            echo "fingerprint=${FINGERPRINT}"
+          } > "$HOME/.oci/config"
+          chmod 600 "$HOME/.oci/config"
+
+          echo "OCI config written with security_token auth"
 
       - name: Terraform init
         run: |
