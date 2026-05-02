@@ -69,10 +69,10 @@ jobs:
             "${{ vars.OCI_DOMAIN_URL }}/oauth2/v1/token" \
             -H "Content-Type: application/x-www-form-urlencoded" \
             -H "Authorization: Basic ${CLIENT_CREDENTIALS}" \
-            -d "grant_type=urn:ietf:params:oauth:grant-type:token-exchange" \
-            -d "subject_token=${GITHUB_JWT}" \
-            -d "subject_token_type=urn:ietf:params:oauth:token-type:jwt" \
-            -d "requested_token_type=urn:oci:token-type:oci-upst" \
+            --data-urlencode "grant_type=urn:ietf:params:oauth:grant-type:token-exchange" \
+            --data-urlencode "requested_token_type=urn:oci:token-type:oci-upst" \
+            --data-urlencode "subject_token=${GITHUB_JWT}" \
+            --data-urlencode "subject_token_type=jwt" \
             --data-urlencode "public_key=${PUBLIC_KEY}")
 
           UPST=$(echo "$RESPONSE" | jq -r '.access_token')
