@@ -31,6 +31,7 @@ jobs:
       TF_VAR_region: ${{ vars.OCI_REGION }}
       TF_VAR_tenancy_id: ${{ vars.OCI_TENANCY_OCID }}
       TF_VAR_compartment_id: ${{ vars.OCI_COMPARTMENT_OCID }}
+      TF_VAR_auth: SecurityToken
 
     steps:
       - name: Checkout
@@ -116,7 +117,8 @@ jobs:
         run: |
           terraform init \
             -backend-config="namespace=${{ vars.OCI_NAMESPACE }}" \
-            -backend-config="config_file_profile=TBCAMP_TERRAFORM"
+            -backend-config="config_file_profile=TBCAMP_TERRAFORM" \
+            -backend-config="auth=SecurityToken"
 
       - name: Terraform plan
         run: terraform plan -out=tfplan

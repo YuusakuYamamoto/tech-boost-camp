@@ -12,3 +12,8 @@ variable "compartment_id" {
   type        = string
   description = "OCID of the compartment where resources will be created (tbcamp compartment)."
 }
+
+variable "auth" {
+  type    = string
+  default = "APIKey"
+}

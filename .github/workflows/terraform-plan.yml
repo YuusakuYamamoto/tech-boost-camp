@@ -28,6 +28,7 @@ jobs:
       TF_VAR_region: ${{ vars.OCI_REGION }}
       TF_VAR_tenancy_id: ${{ vars.OCI_TENANCY_OCID }}
       TF_VAR_compartment_id: ${{ vars.OCI_COMPARTMENT_OCID }}
+      TF_VAR_auth: SecurityToken
       # OCI への認証は OIDC トークン交換で取得した UPST 経由
 
     steps:
@@ -119,6 +120,7 @@ jobs:
           terraform init \
             -backend-config="namespace=${{ vars.OCI_NAMESPACE }}" \
             -backend-config="config_file_profile=TBCAMP_TERRAFORM" \
+            -backend-config="auth=SecurityToken" \
             -lockfile=readonly
 
       - name: Terraform plan
