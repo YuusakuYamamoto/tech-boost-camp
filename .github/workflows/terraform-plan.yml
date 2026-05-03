@@ -155,7 +155,7 @@ jobs:
         run: terraform validate
 
       - name: Setup TFLint
-        uses: terraform-linters/setup-tflint@v4
+        uses: terraform-linters/setup-tflint@b480b8fcdaa6f2c577f8e4fa799e89e756bb7c93  # v6.2.2
         with:
           tflint_version: v0.62.0
 
@@ -166,6 +166,15 @@ jobs:
 
       - name: TFLint run
         run: tflint --recursive
+
+      - name: Trivy config scan
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1  # v0.35.0
+        with:
+          scan-type: config
+          scan-ref: terraform
+          exit-code: 1
+          severity: HIGH,CRITICAL
+          trivyignores: .trivyignore
 
       - name: Terraform init
         run: |
