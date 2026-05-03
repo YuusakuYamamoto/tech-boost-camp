@@ -5,11 +5,14 @@ on:
     branches:
       - main
       - 'deployment/infra/**'
-    paths:
-      - 'terraform/**/*.tf'
-      - 'terraform/**/*.tfvars'
-      - 'terraform/.terraform.lock.hcl'
-      - '.github/workflows/terraform-*.yml'
+    # paths フィルタなし: PR のたびに必ず起動させ、detect-changes job で差分を判定する
+    # 理由: paths フィルタで起動しない PR は Ruleset の Required status check が
+    #       "Expected" のまま残り、マージがブロックされる問題があった
+    # 対処: status-gate job（name: "Terraform Plan"）が常に結果を返すことでブロックを解消
+    #
+    # TODO: test自動化の追加などワークフローが複数になったタイミングで
+    #   terraform-plan.yml を Reusable Workflow（workflow_call）に切り出し、
+    #   orchestrator ワークフローから呼び出す構成に移行する
 
 permissions:
   contents: read
@@ -17,8 +20,39 @@ permissions:
   id-token: write  # GitHub OIDC JWT の取得に必要
 
 jobs:
+  # Job 1: terraform 関連ファイルの変更有無を検出する
+  detect-changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      terraform: ${{ steps.filter.outputs.terraform }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # 全履歴を取得して git diff を正確に実行するため
+
+      - name: Check for terraform changes
+        id: filter
+        run: |
+          CHANGED=$(git diff --name-only \
+            "${{ github.event.pull_request.base.sha }}" \
+            "${{ github.sha }}" \
+            | grep -E '^(terraform/.*\.(tf|tfvars)|terraform/\.terraform\.lock\.hcl|\.github/workflows/terraform-.*\.yml)' \
+            || true)
+          if [ -n "$CHANGED" ]; then
+            echo "terraform=true" >> "$GITHUB_OUTPUT"
+            echo "Terraform-related changes detected:"
+            echo "$CHANGED"
+          else
+            echo "terraform=false" >> "$GITHUB_OUTPUT"
+            echo "No terraform-related changes — plan will be skipped"
+          fi
+
+  # Job 2: terraform plan を実行する（terraform 関連の変更がある場合のみ）
   plan:
-    name: Terraform Plan
+    name: Terraform Plan (run)
+    needs: detect-changes
+    if: needs.detect-changes.outputs.terraform == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -162,3 +196,33 @@ jobs:
               repo: context.repo.repo,
               body: commentBody,
             });
+
+  # Job 3: Ruleset の Required status check が参照する gate job
+  # name を "Terraform Plan" にすることで Ruleset 側の変更が不要になる
+  # plan が skipped（terraform 変更なし）でも success を返し、マージをブロックしない
+  # plan が failure のときのみ failure を返し、マージをブロックする
+  status-gate:
+    name: Terraform Plan
+    needs: [detect-changes, plan]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check job results
+        run: |
+          DETECT="${{ needs.detect-changes.result }}"
+          PLAN="${{ needs.plan.result }}"
+
+          echo "detect-changes: $DETECT"
+          echo "plan:           $PLAN"
+
+          if [[ "$DETECT" == "failure" || "$DETECT" == "cancelled" ]]; then
+            echo "::error::detect-changes job failed"
+            exit 1
+          fi
+          if [[ "$PLAN" == "failure" || "$PLAN" == "cancelled" ]]; then
+            echo "::error::Terraform plan failed"
+            exit 1
+          fi
+
+          # success または skipped（terraform 変更なし）はどちらも通過
+          echo "Gate passed (plan: $PLAN)"
