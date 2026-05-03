@@ -154,6 +154,19 @@ jobs:
       - name: Terraform validate
         run: terraform validate
 
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.62.0
+
+      - name: TFLint init
+        run: tflint --init
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: TFLint run
+        run: tflint --recursive
+
       - name: Terraform init
         run: |
           terraform init \
