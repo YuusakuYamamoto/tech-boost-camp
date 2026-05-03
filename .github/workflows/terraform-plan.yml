@@ -145,6 +145,15 @@ jobs:
         run: terraform fmt -check -recursive
         working-directory: .
 
+        # backend.tf で namespace を partial configuration にしているため「required 属性がない」と誤判定してエラー
+        # terraform init -backend=false で backend 初期化をスキップした状態で init すると、
+        # backend の required 属性チェックが行われないため validate が通る
+      - name: Terraform init (validate only)
+        run: terraform init -backend=false
+
+      - name: Terraform validate
+        run: terraform validate
+
       - name: Terraform init
         run: |
           terraform init \
