@@ -9,3 +9,4 @@ module "network" {
   compartment_id = var.compartment_id
   app_name       = local.app_name
 }
+
