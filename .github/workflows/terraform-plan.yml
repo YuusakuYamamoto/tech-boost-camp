@@ -174,7 +174,7 @@ jobs:
           scan-ref: terraform
           exit-code: 1
           severity: HIGH,CRITICAL
-          trivyignores: ../.trivyignore
+          trivyignores: ${{ github.workspace }}/.trivyignore
 
       - name: Terraform init
         run: |
