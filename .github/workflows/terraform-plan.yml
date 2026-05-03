@@ -33,10 +33,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
         # terraform_version を指定しないことで .terraform-version を自動参照
 
       - name: Exchange GitHub OIDC token for OCI UPST
@@ -131,7 +131,7 @@ jobs:
 
       - name: Comment PR with plan
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const planOutput = process.env.PLAN_OUTPUT || '(no plan output captured)';
