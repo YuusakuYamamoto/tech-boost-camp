@@ -57,3 +57,13 @@ output "container_repository_ids" {
   value       = module.container_registry.repository_ids
   description = "Map of OCIR repository name to OCID."
 }
+
+output "postgres_vm_private_ip" {
+  value       = module.postgres_vm.private_ip
+  description = "Private IP address of the PostgreSQL VM."
+}
+
+output "postgres_vm_instance_id" {
+  value       = module.postgres_vm.instance_id
+  description = "OCID of the PostgreSQL VM."
+}
