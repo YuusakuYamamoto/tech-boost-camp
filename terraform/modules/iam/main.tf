@@ -2,11 +2,6 @@
 # IAM Module - Dynamic Groups + Runtime Policy
 # =============================================================================
 
-# Compartment 名を Policy statement で使用するために取得
-data "oci_identity_compartment" "this" {
-  id = var.compartment_id
-}
-
 # --- Dynamic Groups（テナンシーレベルで作成 — OCI の仕様） ---
 
 # Docs: https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/identity_dynamic_group
@@ -46,9 +41,9 @@ resource "oci_identity_policy" "runtime" {
   description    = "Runtime permissions for ${var.app_name} Container Instances and VMs"
 
   statements = [
-    "Allow dynamic-group ${oci_identity_dynamic_group.app.name} to read secret-family in compartment ${data.oci_identity_compartment.this.name}",
-    "Allow dynamic-group ${oci_identity_dynamic_group.db.name} to read secret-family in compartment ${data.oci_identity_compartment.this.name}",
-    "Allow dynamic-group ${oci_identity_dynamic_group.db.name} to manage objects in compartment ${data.oci_identity_compartment.this.name} where target.bucket.name='${var.backup_bucket_name}'",
+    "Allow dynamic-group ${oci_identity_dynamic_group.app.name} to read secret-family in compartment id ${var.compartment_id}",
+    "Allow dynamic-group ${oci_identity_dynamic_group.db.name} to read secret-family in compartment id ${var.compartment_id}",
+    "Allow dynamic-group ${oci_identity_dynamic_group.db.name} to manage objects in compartment id ${var.compartment_id} where target.bucket.name='${var.backup_bucket_name}'",
   ]
 
   freeform_tags = {
