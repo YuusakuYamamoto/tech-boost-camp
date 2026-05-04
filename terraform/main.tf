@@ -24,3 +24,19 @@ module "vault" {
     "session-secret",
   ]
 }
+
+module "object_storage" {
+  source = "./modules/object_storage"
+
+  compartment_id = var.compartment_id
+  app_name       = local.app_name
+}
+
+module "iam" {
+  source = "./modules/iam"
+
+  tenancy_id         = var.tenancy_id
+  compartment_id     = var.compartment_id
+  app_name           = local.app_name
+  backup_bucket_name = module.object_storage.bucket_name
+}
