@@ -51,3 +51,15 @@ module "container_registry" {
     "${local.app_name}-backend",
   ]
 }
+
+module "postgres_vm" {
+  source = "./modules/postgres_vm"
+
+  compartment_id = var.compartment_id
+  app_name       = local.app_name
+  subnet_id      = module.network.private_subnet_id
+  db_nsg_id      = module.network.db_security_group_id
+  app_nsg_id     = module.network.app_security_group_id
+  vcn_cidr       = "10.0.0.0/16"
+  ssh_public_key = var.ssh_public_key
+}

@@ -17,3 +17,8 @@ variable "auth" {
   type    = string
   default = "APIKey"
 }
+
+variable "ssh_public_key" {
+  type        = string
+  description = "SSH public key to inject into the PostgreSQL VM."
+}
