@@ -40,3 +40,14 @@ module "iam" {
   app_name           = local.app_name
   backup_bucket_name = module.object_storage.bucket_name
 }
+
+module "container_registry" {
+  source = "./modules/container_registry"
+
+  compartment_id = var.compartment_id
+  app_name       = local.app_name
+  repository_names = [
+    "${local.app_name}-frontend",
+    "${local.app_name}-backend",
+  ]
+}
