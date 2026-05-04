@@ -36,7 +36,7 @@ resource "oci_identity_dynamic_group" "db" {
 
 # Docs: https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/identity_policy
 resource "oci_identity_policy" "runtime" {
-  compartment_id = var.tenancy_id
+  compartment_id = var.compartment_id
   name           = "${var.app_name}-runtime-policy"
   description    = "Runtime permissions for ${var.app_name} Container Instances and VMs"
 
