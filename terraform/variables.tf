@@ -3,8 +3,6 @@ variable "region" {
   description = "OCI region where resources will be created (e.g., ap-tokyo-1)."
 }
 
-# Used in modules/iam (Phase 7)
-# tflint-ignore: terraform_unused_declarations
 variable "tenancy_id" {
   type        = string
   description = "OCID of the tenancy."

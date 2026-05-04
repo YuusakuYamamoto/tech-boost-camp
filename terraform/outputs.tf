@@ -37,3 +37,18 @@ output "secret_ids" {
   value       = module.vault.secret_ids
   description = "Map of secret name to OCID."
 }
+
+output "pg_backups_bucket_name" {
+  value       = module.object_storage.bucket_name
+  description = "Name of the pg-backups bucket."
+}
+
+output "app_dynamic_group_id" {
+  value       = module.iam.app_dynamic_group_id
+  description = "OCID of the Dynamic Group for Container Instances."
+}
+
+output "db_dynamic_group_id" {
+  value       = module.iam.db_dynamic_group_id
+  description = "OCID of the Dynamic Group for Compute Instances."
+}
