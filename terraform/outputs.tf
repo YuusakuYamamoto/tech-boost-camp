@@ -22,3 +22,18 @@ output "db_security_group_id" {
   value       = module.network.db_security_group_id
   description = "OCID of the NSG for PostgreSQL VM (db)."
 }
+
+output "vault_id" {
+  value       = module.vault.vault_id
+  description = "OCID of the created Vault."
+}
+
+output "key_id" {
+  value       = module.vault.key_id
+  description = "OCID of the master encryption key."
+}
+
+output "secret_ids" {
+  value       = module.vault.secret_ids
+  description = "Map of secret name to OCID."
+}

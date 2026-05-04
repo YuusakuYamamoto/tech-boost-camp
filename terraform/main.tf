@@ -11,3 +11,16 @@ module "network" {
   public_subnet_cidr  = "10.0.1.0/24"
   private_subnet_cidr = "10.0.2.0/24"
 }
+
+module "vault" {
+  source = "./modules/vault"
+
+  compartment_id      = var.compartment_id
+  app_name            = local.app_name
+  key_protection_mode = "SOFTWARE"
+  secret_names = [
+    "db-password",
+    "google-oauth-client-secret",
+    "session-secret",
+  ]
+}
