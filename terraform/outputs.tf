@@ -52,3 +52,8 @@ output "db_dynamic_group_id" {
   value       = module.iam.db_dynamic_group_id
   description = "OCID of the Dynamic Group for Compute Instances."
 }
+
+output "container_repository_ids" {
+  value       = module.container_registry.repository_ids
+  description = "Map of OCIR repository name to OCID."
+}

@@ -1,0 +1,16 @@
+repos:
+  # Secret detection — PEM, API keys, passwords, tokens
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+
+  # Terraform formatting
+  - repo: local
+    hooks:
+      - id: terraform-fmt
+        name: Terraform fmt
+        entry: terraform fmt -recursive
+        language: system
+        files: \.tf$
+        pass_filenames: false
