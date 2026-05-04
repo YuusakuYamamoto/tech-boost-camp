@@ -60,11 +60,10 @@ locals {
           echo "Done. Block volume mounted at $MOUNT_POINT"
 
     runcmd:
-      - yum-config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
-      - dnf install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
-      - systemctl start docker
-      - systemctl enable docker
-      - usermod -aG docker opc
+      - dnf install -y container-tools
+      - systemctl enable --now podman.socket
+      - ln -s /usr/bin/podman /usr/local/bin/docker
+      - usermod -aG wheel opc
   CLOUD_INIT
 }
 
