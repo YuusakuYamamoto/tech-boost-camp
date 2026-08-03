@@ -29,10 +29,10 @@ locals {
     package_upgrade: false
 
     packages:
-      - yum-utils
+      - dnf-plugins-core
 
     write_files:
-      - path: /home/opc/setup-disk.sh
+      - path: /opt/scripts/setup-disk.sh
         permissions: '0755'
         owner: root:root
         content: |
@@ -60,10 +60,12 @@ locals {
           echo "Done. Block volume mounted at $MOUNT_POINT"
 
     runcmd:
-      - dnf install -y container-tools
-      - systemctl enable --now podman.socket
-      - ln -s /usr/bin/podman /usr/local/bin/docker
+      - dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+      - dnf install -y --allowerasing docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+      - systemctl enable --now docker
+      - usermod -aG docker opc
       - usermod -aG wheel opc
+      - chown -R opc:opc /home/opc
   CLOUD_INIT
 }
 

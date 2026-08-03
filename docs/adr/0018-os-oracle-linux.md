@@ -17,22 +17,23 @@ OS 選定で重要な観点は **OS パッケージリポジトリへのアク�
 - **NAT Gateway 経由**（外部インターネット）
 - **Service Gateway 経由**（OCI 内ミラー）
 
-のどちらかでのみ可能。NAT Gateway は時間課金で月 $32 程度の固定費が発生する。一方 Service Gateway は無料。
+のどちらかでのみ可能。Service Gateway は無料。NAT Gateway は従量課金（$0.0025/GB のデータ処理料）で固定費は発生しない。
 
-担当者は Ubuntu の方が習熟しているが、コスト目標（月数ドル）を踏まえると、NAT Gateway 回避によるコスト削減の優先度が高い。
+担当者は Ubuntu の方が習熟しているが、OS パッチを無料・高速で取得できる Service Gateway 経由を優先し、Oracle Linux を採用する。なお Docker Hub からの PostgreSQL イメージ取得には NAT Gateway が必要だが（ADR-0004 参照）、OS パッチとは経路を分けて管理する。
 
 ## Decision
 
-**Oracle Linux 9** を VM の OS として採用する。OS パッチ・パッケージ更新は **Service Gateway 経由で OCI 内の Oracle Linux ミラー**から取得する。NAT Gateway は立てない（ADR-0004）。
+**Oracle Linux 9** を VM の OS として採用する。OS パッチ・パッケージ更新は **Service Gateway 経由で OCI 内の Oracle Linux ミラー**から取得する（egress 課金ゼロ）。Docker Hub からの PostgreSQL イメージ取得のみ NAT Gateway 経由とし、OS パッチとは経路を分けて管理する（ADR-0004）。
 
 ## Alternatives Considered
 
 ### Ubuntu を採用 + NAT Gateway
 
 - **不採用理由**:
-  - NAT Gateway の固定費（月 $32）が、コスト目標（月数ドル）に対して大きすぎる
-  - 個人アプリは外部 API 連携を想定しておらず、NAT Gateway 用途が OS パッチに限定される
-  - Service Gateway 経由でパッチ取得が無料でできるなら、その方が筋が良い
+  - NAT Gateway が追加されたことで Ubuntu も技術的には選択可能になったが、引き続き Oracle Linux を優先する
+  - Oracle Linux では OS パッチを Service Gateway 経由（egress 課金ゼロ）で取得でき、NAT Gateway 経由より高速・安価
+  - OCI での純正サポートおよびドキュメントが充実しており、トラブル対応が容易
+  - すでに Terraform / cloud-init が Oracle Linux 前提で構築済みであり、Ubuntu への移行コストに見合うメリットがない
 
 ### Ubuntu を採用 + パッチ手動適用（ローカルから SSH 経由）
 
@@ -51,9 +52,9 @@ OS 選定で重要な観点は **OS パッケージリポジトリへのアク�
 
 ### Positive
 
-- NAT Gateway 不要になり、月 $32 のコスト削減
-- OCI 内ミラーから OS パッチを取得するため、ネットワーク経路が短く、egress 課金もない
+- OS パッチは Service Gateway 経由（OCI 内ミラー）で取得するため、ネットワーク経路が短く egress 課金もない
 - Oracle Linux は OCI で純正サポートされており、トラブル時のドキュメントが豊富
+- Docker Hub 経由の PostgreSQL イメージ取得には NAT Gateway を使うが、OS パッチ経路と役割を分けることでコストを最小化
 
 ### Negative / Trade-off
 
@@ -63,5 +64,4 @@ OS 選定で重要な観点は **OS パッケージリポジトリへのアク�
 
 ### Neutral
 
-- 外部 API 連携が必要になった時点で NAT Gateway を後付けで立てる選択肢は残る（その場合、NAT Gateway 経由でのパッチ取得も併用可）
 - Container Instance 側の OS は OCI 管理であり、本決定の影響範囲外
