@@ -79,6 +79,19 @@ resource "oci_core_service_gateway" "this" {
   }
 }
 
+# Docs: https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/core_nat_gateway
+resource "oci_core_nat_gateway" "this" {
+  compartment_id = var.compartment_id
+  vcn_id         = oci_core_vcn.this.id
+  display_name   = "${var.app_name}-natgw"
+
+  freeform_tags = {
+    app        = var.app_name
+    managed-by = "terraform"
+    role       = "network"
+  }
+}
+
 # --- Route Tables ---
 
 # Docs: https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/core_route_table
@@ -112,6 +125,13 @@ resource "oci_core_route_table" "private" {
     destination_type  = "SERVICE_CIDR_BLOCK"
     network_entity_id = oci_core_service_gateway.this.id
     description       = "Oracle Services access via Service Gateway"
+  }
+
+  route_rules {
+    destination       = "0.0.0.0/0"
+    destination_type  = "CIDR_BLOCK"
+    network_entity_id = oci_core_nat_gateway.this.id
+    description       = "Outbound internet access via NAT Gateway"
   }
 
   freeform_tags = {
