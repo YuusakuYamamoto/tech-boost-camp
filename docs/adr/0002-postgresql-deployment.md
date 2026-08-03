@@ -30,12 +30,14 @@
 | ------------------- | ------------------------------------------------ |
 | VM シェイプ         | Ampere A1 Flex（1 OCPU + 6 GB、Always Free 枠内）|
 | OS                  | Oracle Linux 9（ADR-0018 参照）                  |
-| PostgreSQL 起動方法 | 公式 Docker イメージを `docker compose` で起動   |
+| PostgreSQL 起動方法 | Docker CE + docker compose plugin（公式インストーラ）で起動 |
 | データ配置          | Block Volume（50 GB、専用）に `/mnt/pgdata` でマウント |
 | バックアップ        | `pg_dumpall` を cron で日次取得 → Object Storage |
 | バックアップ保持    | 7 日分ローテーション                             |
 
 データ用の Block Volume を OS ボリュームとは別に分離することで、VM が壊れても別 VM にデータを引き継げる構成にする。
+
+Docker Hub からの postgres イメージ取得には、プライベートサブネットからのインターネットアクセスが必要なため NAT GW を使用する（ADR-0004 参照）。
 
 ## Alternatives Considered
 
@@ -51,6 +53,13 @@
   - PostgreSQL のバージョン変更・設定変更が OS 依存になる
   - 担当者が Docker に習熟しているため、Docker 経由のほうが扱いやすい
   - ローカル開発環境（docker-compose）との構成差を最小化できる
+
+### Podman を Docker 代替として使用
+
+- **不採用理由**:
+  - `ln -s /usr/bin/podman /usr/local/bin/docker` の alias では docker compose plugin との挙動差が生じることがある（volume mount パス・rootless 権限まわり）
+  - Service Gateway のみの構成で Docker Hub からイメージを pull できない問題は Podman に替えても解決しない（OCIR への事前プッシュが別途必要になる）
+  - Docker CE が公式ドキュメント・チュートリアルのデファクトであり、同一ツールチェーンで運用する方が知見を活かしやすい
 
 ### Container Instance 内で PostgreSQL を動かす
 
