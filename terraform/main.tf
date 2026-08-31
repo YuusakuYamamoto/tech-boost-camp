@@ -39,6 +39,7 @@ module "iam" {
   compartment_id     = var.compartment_id
   app_name           = local.app_name
   backup_bucket_name = module.object_storage.bucket_name
+  config_bucket_name = module.object_storage.config_bucket_name
 }
 
 module "container_registry" {
@@ -55,11 +56,15 @@ module "container_registry" {
 module "postgres_vm" {
   source = "./modules/postgres_vm"
 
-  compartment_id = var.compartment_id
-  app_name       = local.app_name
-  subnet_id      = module.network.private_subnet_id
-  db_nsg_id      = module.network.db_security_group_id
-  app_nsg_id     = module.network.app_security_group_id
-  vcn_cidr       = "10.0.0.0/16"
-  ssh_public_key = var.ssh_public_key
+  compartment_id        = var.compartment_id
+  app_name              = local.app_name
+  subnet_id             = module.network.private_subnet_id
+  db_nsg_id             = module.network.db_security_group_id
+  app_nsg_id            = module.network.app_security_group_id
+  vcn_cidr              = "10.0.0.0/16"
+  ssh_public_key        = var.ssh_public_key
+  namespace             = module.object_storage.namespace
+  config_bucket_name    = module.object_storage.config_bucket_name
+  backup_bucket_name    = module.object_storage.bucket_name
+  db_password_secret_id = module.vault.secret_ids["db-password"]
 }

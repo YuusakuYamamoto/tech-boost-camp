@@ -33,3 +33,23 @@ variable "ssh_public_key" {
   type        = string
   description = "SSH public key to inject into the VM for remote access."
 }
+
+variable "namespace" {
+  type        = string
+  description = "Object Storage namespace of the tenancy."
+}
+
+variable "config_bucket_name" {
+  type        = string
+  description = "Name of the bucket that stores docker-compose.yml."
+}
+
+variable "backup_bucket_name" {
+  type        = string
+  description = "Name of the bucket that stores PostgreSQL dumps."
+}
+
+variable "db_password_secret_id" {
+  type        = string
+  description = "OCID of the Vault secret holding the PostgreSQL password."
+}
