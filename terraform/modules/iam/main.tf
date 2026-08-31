@@ -23,7 +23,9 @@ resource "oci_identity_dynamic_group" "db" {
   compartment_id = var.tenancy_id
   name           = "${var.app_name}-db-instances"
   description    = "Compute Instances in ${var.app_name} compartment for Instance Principal auth"
-  matching_rule  = "All {resource.type = 'instance', resource.compartment.id = '${var.compartment_id}'}"
+  # instance.compartment.id は Compute Instance 専用の属性で、対象種別を含意するため
+  # resource.type の指定は不要。resource.compartment.id では実際にマッチしなかった。
+  matching_rule = "All {instance.compartment.id = '${var.compartment_id}'}"
 
   freeform_tags = {
     app        = var.app_name
@@ -41,6 +43,7 @@ resource "oci_identity_policy" "runtime" {
   description    = "Runtime permissions for ${var.app_name} Container Instances and VMs"
 
   statements = [
+    "Allow dynamic-group ${oci_identity_dynamic_group.db.name} to read buckets in compartment id ${var.compartment_id}",
     "Allow dynamic-group ${oci_identity_dynamic_group.app.name} to read secret-family in compartment id ${var.compartment_id}",
     "Allow dynamic-group ${oci_identity_dynamic_group.db.name} to read secret-family in compartment id ${var.compartment_id}",
     "Allow dynamic-group ${oci_identity_dynamic_group.db.name} to manage objects in compartment id ${var.compartment_id} where target.bucket.name='${var.backup_bucket_name}'",
