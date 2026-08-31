@@ -21,52 +21,23 @@ data "oci_core_images" "ol9_arm" {
 }
 
 # --- cloud-init ---
-
 locals {
-  cloud_init = <<-CLOUD_INIT
-    #cloud-config
-    package_update: true
-    package_upgrade: false
+  bootstrap_script = templatefile("${path.module}/scripts/bootstrap-postgres.sh", {
+    namespace     = var.namespace
+    config_bucket = var.config_bucket_name
+    secret_id     = var.db_password_secret_id
+  })
 
-    packages:
-      - dnf-plugins-core
+  backup_script = templatefile("${path.module}/scripts/backup-postgres.sh", {
+    namespace     = var.namespace
+    backup_bucket = var.backup_bucket_name
+  })
 
-    write_files:
-      - path: /opt/scripts/setup-disk.sh
-        permissions: '0755'
-        owner: root:root
-        content: |
-          #!/bin/bash
-          # Block volume のフォーマットとマウント
-          # terraform apply 後、ボリュームがアタッチされてから実行する
-          set -euo pipefail
-          DEVICE="/dev/oracleoci/oraclevdb"
-          MOUNT_POINT="/data"
-
-          if ! blkid "$DEVICE" > /dev/null 2>&1; then
-            echo "Formatting $DEVICE as xfs..."
-            mkfs.xfs "$DEVICE"
-          else
-            echo "$DEVICE is already formatted, skipping."
-          fi
-
-          mkdir -p "$MOUNT_POINT"
-          if ! grep -q "oraclevdb" /etc/fstab; then
-            echo "$DEVICE $MOUNT_POINT xfs defaults,_netdev,nofail 0 2" >> /etc/fstab
-          fi
-          mount -a
-          mkdir -p "$MOUNT_POINT/postgres"
-          chown -R opc:opc "$MOUNT_POINT/postgres"
-          echo "Done. Block volume mounted at $MOUNT_POINT"
-
-    runcmd:
-      - dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-      - dnf install -y --allowerasing docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-      - systemctl enable --now docker
-      - usermod -aG docker opc
-      - usermod -aG wheel opc
-      - chown -R opc:opc /home/opc
-  CLOUD_INIT
+  cloud_init = templatefile("${path.module}/templates/cloud-init.yaml.tftpl", {
+    setup_disk_b64 = base64encode(file("${path.module}/scripts/setup-disk.sh")) // Terraform変数を含まないため file() で読み込み
+    bootstrap_b64  = base64encode(local.bootstrap_script)
+    backup_b64     = base64encode(local.backup_script)
+  })
 }
 
 # --- Compute Instance ---
@@ -106,6 +77,8 @@ resource "oci_core_instance" "this" {
     managed-by = "terraform"
     role       = "postgres-vm"
   }
+
+  depends_on = [oci_objectstorage_object.compose]
 }
 
 # --- Block Volume（PostgreSQL データ用） ---
@@ -185,4 +158,15 @@ resource "oci_core_network_security_group_security_rule" "db_all_egress" {
 
   destination      = "0.0.0.0/0"
   destination_type = "CIDR_BLOCK"
+}
+
+# --- Config Object ---
+
+# Docs: https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/objectstorage_object
+resource "oci_objectstorage_object" "compose" {
+  namespace    = var.namespace
+  bucket       = var.config_bucket_name
+  object       = "postgres/docker-compose.yml"
+  content      = file("${path.module}/files/docker-compose.yml")
+  content_type = "application/yaml"
 }

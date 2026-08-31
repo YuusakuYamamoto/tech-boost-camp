@@ -17,3 +17,8 @@ variable "backup_bucket_name" {
   type        = string
   description = "Name of the Object Storage bucket for PostgreSQL backups."
 }
+
+variable "config_bucket_name" {
+  type        = string
+  description = "Name of the bucket that stores application config files (docker-compose.yml)."
+}

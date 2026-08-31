@@ -44,6 +44,7 @@ resource "oci_identity_policy" "runtime" {
     "Allow dynamic-group ${oci_identity_dynamic_group.app.name} to read secret-family in compartment id ${var.compartment_id}",
     "Allow dynamic-group ${oci_identity_dynamic_group.db.name} to read secret-family in compartment id ${var.compartment_id}",
     "Allow dynamic-group ${oci_identity_dynamic_group.db.name} to manage objects in compartment id ${var.compartment_id} where target.bucket.name='${var.backup_bucket_name}'",
+    "Allow dynamic-group ${oci_identity_dynamic_group.db.name} to read objects in compartment id ${var.compartment_id} where target.bucket.name='${var.config_bucket_name}'",
   ]
 
   freeform_tags = {

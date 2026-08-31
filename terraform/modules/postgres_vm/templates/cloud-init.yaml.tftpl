@@ -1,0 +1,70 @@
+#cloud-config
+package_update: true
+package_upgrade: false
+
+packages:
+  - dnf-plugins-core
+  - cronie
+
+write_files:
+  - path: /opt/scripts/setup-disk.sh
+    permissions: '0755'
+    owner: root:root
+    encoding: b64
+    content: ${setup_disk_b64}
+
+  - path: /opt/scripts/bootstrap-postgres.sh
+    permissions: '0755'
+    owner: root:root
+    encoding: b64
+    content: ${bootstrap_b64}
+
+  - path: /opt/scripts/backup-postgres.sh
+    permissions: '0755'
+    owner: root:root
+    encoding: b64
+    content: ${backup_b64}
+
+  - path: /etc/systemd/system/postgres-bootstrap.service
+    permissions: '0644'
+    owner: root:root
+    content: |
+      [Unit]
+      Description=Bootstrap PostgreSQL stack on tbcamp
+      After=docker.service network-online.target
+      Requires=docker.service
+      Wants=network-online.target
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+      ExecStart=/opt/scripts/bootstrap-postgres.sh
+      StandardOutput=journal
+      StandardError=journal
+
+      [Install]
+      WantedBy=multi-user.target
+
+  - path: /etc/cron.d/postgres-backup
+    permissions: '0644'
+    owner: root:root
+    content: |
+      # 毎日 03:00 JST (18:00 UTC) にバックアップ
+      0 18 * * * root /opt/scripts/backup-postgres.sh >> /var/log/postgres-backup.log 2>&1
+
+runcmd:
+  # Docker CE
+  - dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+  - dnf install -y --allowerasing docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  - systemctl enable --now docker
+  # OCI CLI
+  - dnf install -y oraclelinux-developer-release-el9
+  - dnf install -y python39-oci-cli
+  # ユーザー設定
+  - usermod -aG docker opc
+  - usermod -aG wheel opc
+  - chown -R opc:opc /home/opc
+  # 起動
+  - systemctl enable --now crond
+  - systemctl daemon-reload
+  - systemctl enable --now postgres-bootstrap.service
