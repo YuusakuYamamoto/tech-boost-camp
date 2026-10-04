@@ -19,6 +19,14 @@ variable "key_protection_mode" {
   }
 }
 
+# CA 用鍵はスケジュール削除のため、削除猶予中は同名で作り直せない。
+# CA / 証明書と同じサフィックスを共有し、作り直すときにインクリメントする。
+variable "name_suffix" {
+  type        = string
+  description = "Suffix for resources that cannot be re-created under the same name while a scheduled deletion is pending (KMS keys, CAs, certificates). Increment when re-creating."
+  default     = "01"
+}
+
 variable "secret_names" {
   type        = list(string)
   description = "List of secret names to create (e.g., [\"db-password\", \"session-secret\"])."

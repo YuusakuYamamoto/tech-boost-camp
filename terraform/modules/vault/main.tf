@@ -38,6 +38,31 @@ resource "oci_kms_key" "this" {
   }
 }
 
+# --- CA 用 非対称鍵 ---
+
+# Certificates サービスはソフトウェア保護鍵をサポートしないため HSM 固定。
+# 上の master-key（SOFTWARE / AES）は CA には使えない。
+# 選べるのは RSA 2048 / RSA 4096 / ECDSA NIST_P384 のみ（RSA 3072 は不可）。
+# HSM 鍵は key version あたり $0.53 だが、最初の 20 version は無料。
+# Docs: https://docs.oracle.com/en-us/iaas/Content/certificates/creating-certificate-authority.htm
+resource "oci_kms_key" "ca" {
+  compartment_id      = var.compartment_id
+  display_name        = "${var.app_name}-ca-key-${var.name_suffix}"
+  management_endpoint = oci_kms_vault.this.management_endpoint
+  protection_mode     = "HSM"
+
+  key_shape {
+    algorithm = "RSA"
+    length    = 256 # バイト指定。RSA 2048 bit に相当
+  }
+
+  freeform_tags = {
+    app        = var.app_name
+    managed-by = "terraform"
+    role       = "vault"
+  }
+}
+
 # --- Secrets（箱のみ、実値は OCI CLI で後から投入） ---
 
 # Docs: https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/vault_secret

@@ -8,6 +8,11 @@ output "key_id" {
   description = "OCID of the master encryption key."
 }
 
+output "ca_key_id" {
+  value       = oci_kms_key.ca.id
+  description = "OCID of the HSM-protected asymmetric key used by the certificate authority."
+}
+
 output "secret_ids" {
   value       = { for k, v in oci_vault_secret.this : k => v.id }
   description = "Map of secret name to OCID (e.g., {\"db-password\" = \"ocid1.vaultsecret...\"})."
