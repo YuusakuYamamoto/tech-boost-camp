@@ -180,7 +180,10 @@ resource "oci_load_balancer_rule_set" "redirect_to_https" {
   items {
     action        = "REDIRECT"
     response_code = 301
-    description   = "Redirect all HTTP traffic to HTTPS"
+
+    # description は書かないこと。OCI は REDIRECT の item に description を
+    # 保存せず（GET の応答に含まれない）、config に書くと state と食い違って
+    # plan に remove + add の差分が出続ける。
 
     # すべてのパスを対象にする。FORCE_LONGEST_PREFIX_MATCH で "/" は全体に一致する。
     conditions {
@@ -189,8 +192,14 @@ resource "oci_load_balancer_rule_set" "redirect_to_https" {
       operator        = "FORCE_LONGEST_PREFIX_MATCH"
     }
 
+    # protocol は enum ではなく自由文字列。"HTTPS" だと Location ヘッダが
+    # HTTPS://y12u.com:443/ と大文字で返る。RFC 3986 はスキームを大文字小文字
+    # 区別なしとしつつ小文字への正規化を推奨しているため、小文字で指定する。
+    #
+    # port は省略できない。省略すると受信リクエストの値（80）を引き継ぐため、
+    # Location が https://y12u.com:80/ になってしまう。:443 の冗長表記は残る。
     redirect_uri {
-      protocol = "HTTPS"
+      protocol = "https"
       host     = "{host}"
       path     = "{path}"
       query    = "{query}"
