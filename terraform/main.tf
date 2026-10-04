@@ -68,3 +68,16 @@ module "postgres_vm" {
   backup_bucket_name    = module.object_storage.bucket_name
   db_password_secret_id = module.vault.secret_ids["db-password"]
 }
+
+module "load_balancer" {
+  source = "./modules/load_balancer"
+
+  compartment_id = var.compartment_id
+  app_name       = local.app_name
+  subnet_id      = module.network.public_subnet_id
+  nsg_id         = module.network.lb_security_group_id
+  app_nsg_id     = module.network.app_security_group_id
+
+  # 証明書は Step 9c で内部 CA を作成してから渡す
+  certificate_ids = []
+}

@@ -22,3 +22,8 @@ output "db_security_group_id" {
   value       = oci_core_network_security_group.db.id
   description = "OCID of the NSG for PostgreSQL VM (db)."
 }
+
+output "lb_security_group_id" {
+  value       = oci_core_network_security_group.lb.id
+  description = "OCID of the NSG for the public Load Balancer (lb)."
+}
