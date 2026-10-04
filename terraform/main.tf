@@ -1,5 +1,11 @@
 locals {
-  app_name = "tbcamp"
+  app_name    = "tbcamp"
+  domain_name = "y12u.com"
+
+  # CA 用鍵 / CA / 証明書はいずれもスケジュール削除で、削除猶予中は同名で
+  # 作り直せない。作り直すときはこの値をインクリメントして 3 つまとめて
+  # 世代を揃える。
+  name_suffix = "01"
 }
 
 module "network" {
@@ -18,6 +24,7 @@ module "vault" {
   compartment_id      = var.compartment_id
   app_name            = local.app_name
   key_protection_mode = "SOFTWARE"
+  name_suffix         = local.name_suffix
   secret_names = [
     "db-password",
     "google-oauth-client-secret",
@@ -69,6 +76,16 @@ module "postgres_vm" {
   db_password_secret_id = module.vault.secret_ids["db-password"]
 }
 
+module "certificates" {
+  source = "./modules/certificates"
+
+  compartment_id = var.compartment_id
+  app_name       = local.app_name
+  domain_name    = local.domain_name
+  kms_key_id     = module.vault.ca_key_id
+  name_suffix    = local.name_suffix
+}
+
 module "load_balancer" {
   source = "./modules/load_balancer"
 
@@ -78,6 +95,7 @@ module "load_balancer" {
   nsg_id         = module.network.lb_security_group_id
   app_nsg_id     = module.network.app_security_group_id
 
-  # 証明書は Step 9c で内部 CA を作成してから渡す
-  certificate_ids = []
+  # 要素の値は apply 時まで未確定だが、リストの長さは plan 時に確定するため
+  # HTTPS リスナーと redirect rule set の count は解決できる。
+  certificate_ids = [module.certificates.certificate_id]
 }
