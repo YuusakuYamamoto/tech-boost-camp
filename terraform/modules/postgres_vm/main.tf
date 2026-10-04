@@ -79,6 +79,16 @@ resource "oci_core_instance" "this" {
   }
 
   depends_on = [oci_objectstorage_object.compose]
+
+  # data.oci_core_images は常に最新を返すため、Oracle Linux の月次更新のたびに
+  # source_id のドリフトが発生する。source_id の変更は in-place 更新として
+  # ブートボリュームの置き換え（インスタンス停止 → 置き換え → 復帰）を引き起こし、
+  # ブートボリューム上の構成（Docker / OCI CLI / /opt 配下 / systemd / cron）が失われる。
+  # 新規作成時は最新を拾い、既存インスタンスは作成時点のイメージに固定する。
+  # イメージの更新は意図的な VM 再作成でのみ行う。
+  lifecycle {
+    ignore_changes = [source_details[0].source_id]
+  }
 }
 
 # --- Block Volume（PostgreSQL データ用） ---
