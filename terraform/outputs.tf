@@ -83,6 +83,21 @@ output "load_balancer_id" {
   description = "OCID of the Load Balancer."
 }
 
+output "ca_key_id" {
+  value       = module.vault.ca_key_id
+  description = "OCID of the HSM key backing the internal CA."
+}
+
+output "certificate_authority_id" {
+  value       = module.certificates.certificate_authority_id
+  description = "OCID of the internal root certificate authority."
+}
+
+output "certificate_id" {
+  value       = module.certificates.certificate_id
+  description = "OCID of the leaf certificate for the domain."
+}
+
 output "load_balancer_public_ip" {
   value       = module.load_balancer.public_ip
   description = "Public IP of the Load Balancer. Register this as the A record for y12u.com."

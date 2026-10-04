@@ -125,6 +125,9 @@ resource "oci_load_balancer_listener" "http" {
   default_backend_set_name = oci_load_balancer_backend_set.frontend.name
   path_route_set_name      = oci_load_balancer_path_route_set.this.name
 
+  # HTTPS リスナーがないあいだは空リスト。redirect が作られると 301 を返すようになる。
+  rule_set_names = oci_load_balancer_rule_set.redirect_to_https[*].name
+
   connection_configuration {
     idle_timeout_in_seconds = 60
   }
@@ -150,6 +153,41 @@ resource "oci_load_balancer_listener" "https" {
 
   connection_configuration {
     idle_timeout_in_seconds = 60
+  }
+}
+
+# --- Rule Sets ---
+
+# HTTP リスナーに紐付けて 301 で HTTPS に飛ばす。HTTPS リスナーと同じ条件で
+# 作成し、リスナーがない状態でリダイレクトだけ残らないようにする。
+# redirect_uri のプレースホルダ（{host} / {path} / {query}）により、
+# パスとクエリを保持したままスキームだけ変える。
+# Docs: https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/load_balancer_rule_set
+resource "oci_load_balancer_rule_set" "redirect_to_https" {
+  count = length(var.certificate_ids) > 0 ? 1 : 0
+
+  load_balancer_id = oci_load_balancer_load_balancer.this.id
+  name             = "redirect-to-https"
+
+  items {
+    action        = "REDIRECT"
+    response_code = 301
+    description   = "Redirect all HTTP traffic to HTTPS"
+
+    # すべてのパスを対象にする。FORCE_LONGEST_PREFIX_MATCH で "/" は全体に一致する。
+    conditions {
+      attribute_name  = "PATH"
+      attribute_value = "/"
+      operator        = "FORCE_LONGEST_PREFIX_MATCH"
+    }
+
+    redirect_uri {
+      protocol = "HTTPS"
+      host     = "{host}"
+      path     = "{path}"
+      query    = "{query}"
+      port     = 443
+    }
   }
 }
 
