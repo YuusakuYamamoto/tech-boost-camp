@@ -149,6 +149,11 @@ resource "oci_load_balancer_listener" "https" {
   # （protocols だけ指定すると既定の cipher suite と不整合になりうるため）
   ssl_configuration {
     certificate_ids = var.certificate_ids
+
+    # 省略するとプロバイダーが true を送り、API が trusted_certificate_authority_ids
+    # を要求して 400 になる（mTLS の設定）。ここはサーバー側の TLS 終端で
+    # クライアント証明書は検証しないため明示的に false にする。
+    verify_peer_certificate = false
   }
 
   connection_configuration {
@@ -167,7 +172,10 @@ resource "oci_load_balancer_rule_set" "redirect_to_https" {
   count = length(var.certificate_ids) > 0 ? 1 : 0
 
   load_balancer_id = oci_load_balancer_load_balancer.this.id
-  name             = "redirect-to-https"
+
+  # rule set の name は ^[a-zA-Z_][a-zA-Z_0-9]* のみ。ハイフンは使えない
+  # （backend set や path route set とは制約が違う）。SDK の例も example_rule_set。
+  name = "redirect_to_https"
 
   items {
     action        = "REDIRECT"
