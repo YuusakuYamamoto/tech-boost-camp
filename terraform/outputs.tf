@@ -23,6 +23,11 @@ output "db_security_group_id" {
   description = "OCID of the NSG for PostgreSQL VM (db)."
 }
 
+output "lb_security_group_id" {
+  value       = module.network.lb_security_group_id
+  description = "OCID of the NSG for the public Load Balancer (lb)."
+}
+
 output "vault_id" {
   value       = module.vault.vault_id
   description = "OCID of the created Vault."
@@ -53,6 +58,11 @@ output "db_dynamic_group_id" {
   description = "OCID of the Dynamic Group for Compute Instances."
 }
 
+output "cert_authorities_dynamic_group_id" {
+  value       = module.iam.cert_authorities_dynamic_group_id
+  description = "OCID of the Dynamic Group for Certificate Authorities."
+}
+
 output "container_repository_ids" {
   value       = module.container_registry.repository_ids
   description = "Map of OCIR repository name to OCID."
@@ -66,4 +76,14 @@ output "postgres_vm_private_ip" {
 output "postgres_vm_instance_id" {
   value       = module.postgres_vm.instance_id
   description = "OCID of the PostgreSQL VM."
+}
+
+output "load_balancer_id" {
+  value       = module.load_balancer.load_balancer_id
+  description = "OCID of the Load Balancer."
+}
+
+output "load_balancer_public_ip" {
+  value       = module.load_balancer.public_ip
+  description = "Public IP of the Load Balancer. Register this as the A record for y12u.com."
 }

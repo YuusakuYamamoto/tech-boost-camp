@@ -208,3 +208,18 @@ resource "oci_core_network_security_group" "db" {
     role       = "network"
   }
 }
+
+# Default Security List を空にしているため、LB の VNIC も NSG に所属しないと
+# インターネットから到達できない。
+# Docs: https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/core_network_security_group
+resource "oci_core_network_security_group" "lb" {
+  compartment_id = var.compartment_id
+  vcn_id         = oci_core_vcn.this.id
+  display_name   = "${var.app_name}-lb-nsg"
+
+  freeform_tags = {
+    app        = var.app_name
+    managed-by = "terraform"
+    role       = "network"
+  }
+}

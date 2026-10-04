@@ -34,13 +34,32 @@ resource "oci_identity_dynamic_group" "db" {
   }
 }
 
+# Certificates サービスの CA はリソースプリンシパルとして KMS の鍵に署名を依頼する。
+# そのための Dynamic Group（Step 9c の CA 作成に先行して必要）。
+# Docs: https://docs.oracle.com/en-us/iaas/Content/certificates/managing-certificate-authorities.htm
+resource "oci_identity_dynamic_group" "cert_authorities" {
+  compartment_id = var.tenancy_id
+  name           = "${var.app_name}-cert-authorities"
+  description    = "Certificate Authorities for Resource Principal auth"
+  # resource.compartment.id での絞り込みは、db 動的グループで実際にマッチしなかった
+  # 前例があるため採らない。公式ドキュメントが示す形のまま使う。
+  # テナンシ内の CA は本プロジェクトのもののみのため、絞り込みなしで実害はない。
+  matching_rule = "resource.type = 'certificateauthority'"
+
+  freeform_tags = {
+    app        = var.app_name
+    managed-by = "terraform"
+    role       = "iam"
+  }
+}
+
 # --- Runtime Policy（tbcamp compartment に配置） ---
 
 # Docs: https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/identity_policy
 resource "oci_identity_policy" "runtime" {
   compartment_id = var.compartment_id
   name           = "${var.app_name}-runtime-policy"
-  description    = "Runtime permissions for ${var.app_name} Container Instances and VMs"
+  description    = "Runtime permissions for ${var.app_name} Container Instances, VMs and Certificate Authorities"
 
   statements = [
     "Allow dynamic-group ${oci_identity_dynamic_group.db.name} to read buckets in compartment id ${var.compartment_id}",
@@ -48,6 +67,7 @@ resource "oci_identity_policy" "runtime" {
     "Allow dynamic-group ${oci_identity_dynamic_group.db.name} to read secret-family in compartment id ${var.compartment_id}",
     "Allow dynamic-group ${oci_identity_dynamic_group.db.name} to manage objects in compartment id ${var.compartment_id} where target.bucket.name='${var.backup_bucket_name}'",
     "Allow dynamic-group ${oci_identity_dynamic_group.db.name} to read objects in compartment id ${var.compartment_id} where target.bucket.name='${var.config_bucket_name}'",
+    "Allow dynamic-group ${oci_identity_dynamic_group.cert_authorities.name} to use keys in compartment id ${var.compartment_id}",
   ]
 
   freeform_tags = {
