@@ -53,7 +53,7 @@ KMS 鍵・CA・証明書はいずれもスケジュール削除で、削除猶�
 ### Positive
 
 - HTTPS 終端の構成を Terraform だけで再現できる
-- HSM 鍵は key version あたり $0.53 だが最初の 20 version は無料。Cost Analysis（2026-09-25〜10-09）で現状 **1 version** であることを確認済み。`SOFTWARE` 保護の master key はこの SKU で計量されない
+- HSM 鍵は key version あたり $0.53 だが最初の 20 version は無料。Cost Analysis（2026-09-25〜10-09）で現状 **1 version** であることを確認済み。`SOFTWARE` 保護の master key はこの SKU で計量されない（2026-10-10 追記）
 
 ### Negative / Trade-off
 
