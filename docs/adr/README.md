@@ -4,26 +4,29 @@
 
 ## ADR 一覧
 
-| #    | タイトル                                                       | Status   |
-| ---- | -------------------------------------------------------------- | -------- |
-| 0001 | デプロイプラットフォームに OCI Container Instances を採用     | Proposed |
-| 0002 | PostgreSQL は VM 上の Docker でセルフホスト運用                | Proposed |
-| 0003 | Next.js は SSR 前提で運用する                                  | Proposed |
-| 0004 | 単一 VCN によるネットワーク基盤                                | Proposed |
-| 0005 | Public Load Balancer による HTTPS 終端とパスベースルーティング | Proposed |
-| 0006 | IaC ツールに Terraform を採用、単一環境構成                    | Proposed |
-| 0007 | CI/CD プラットフォームに GitHub Actions を採用                 | Proposed |
-| 0008 | コンテナレジストリに OCIR を採用                               | Proposed |
-| 0009 | CI/CD パイプラインを役割別に分離                               | Proposed |
-| 0010 | デプロイトリガに `deployment/{app}` ブランチを採用             | Proposed |
-| 0011 | Container Instance 切替方式（パターン A・割り切り型）          | Proposed |
-| 0012 | ヘルスチェックを liveness / readiness の 2 段で実装            | Proposed |
-| 0013 | GitHub Actions → OCI 認証に OIDC 連携を採用                    | Proposed |
-| 0014 | シークレットストレージに OCI Vault を採用                      | Proposed |
-| 0015 | シークレット注入をエントリポイントスクリプトで行う             | Proposed |
-| 0016 | アプリケーション認証は Google アカウント + allowlist           | Proposed |
-| 0017 | 監視・アラートの初期方針                                       | Proposed |
-| 0018 | DB VM の OS に Oracle Linux を採用                             | Proposed |
+| #    | タイトル                                                        | Status   |
+| ---- | --------------------------------------------------------------- | -------- |
+| 0001 | デプロイプラットフォームに OCI Container Instances を採用       | Proposed |
+| 0002 | PostgreSQL は VM 上の Docker でセルフホスト運用                 | Proposed |
+| 0003 | Next.js は SSR 前提で運用する                                   | Proposed |
+| 0004 | 単一 VCN によるネットワーク基盤                                 | Proposed |
+| 0005 | Public Load Balancer による HTTPS 終端とパスベースルーティング  | Proposed |
+| 0006 | IaC ツールに Terraform を採用、単一環境構成                     | Proposed |
+| 0007 | CI/CD プラットフォームに GitHub Actions を採用                  | Proposed |
+| 0008 | コンテナレジストリに OCIR を採用                                | Proposed |
+| 0009 | CI/CD パイプラインを役割別に分離                                | Proposed |
+| 0010 | デプロイトリガに `deployment/{app}` ブランチを採用              | Proposed |
+| 0011 | Container Instance 切替方式（パターン A・割り切り型）           | Proposed |
+| 0012 | ヘルスチェックを liveness / readiness の 2 段で実装             | Proposed |
+| 0013 | GitHub Actions → OCI 認証に OIDC 連携を採用                     | Proposed |
+| 0014 | シークレットストレージに OCI Vault を採用                       | Proposed |
+| 0015 | シークレット注入をエントリポイントスクリプトで行う              | Proposed |
+| 0016 | アプリケーション認証は Google アカウント + allowlist            | Proposed |
+| 0017 | 監視・アラートの初期方針                                        | Proposed |
+| 0018 | DB VM の OS に Oracle Linux を採用                              | Proposed |
+| 0019 | DNS は Xserver Domain で管理し、LB には予約パブリック IP を使う | Proposed |
+| 0020 | TLS 証明書は内部 CA で開始し、Let's Encrypt へ移行する          | Proposed |
+| 0021 | public リポジトリの PR コメントに OCID を出すことを許容する     | Proposed |
 
 ## Status の運用
 
