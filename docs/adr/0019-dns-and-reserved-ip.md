@@ -43,12 +43,13 @@ OCI には DNS サービスがあり、ゾーンもレコードも Terraform で
 ### Positive
 
 - 追加費用がゼロ。予約パブリック IP についても、Cost Analysis（2026-09-25〜10-09、Usage ビュー）で**該当する SKU 行が存在しない**ことを確認済み
-- LB を destroy しても予約パブリック IP は残るため、作り直し時に同じ IP を再利用できる。A レコードの修正が不要
+- LB が再作成（replace）されても予約パブリック IP は別リソースとして残るため、同じ IP が引き継がれる。A レコードの修正が不要
 
 ### Negative / Trade-off
 
 - A レコードが IaC の外にある。リポジトリだけでは構成の全体像が完結しない
 - DNS の変更は常に手作業になる。手順を学びノートに残しておく必要がある
+- 予約パブリック IP は `modules/load_balancer/` の管理下にあるため、`terraform destroy` では LB と一緒に削除される。IP を保持したまま作り直したい場合は、destroy ではなく `-replace` で LB だけを置き換える
 
 ### Neutral
 
