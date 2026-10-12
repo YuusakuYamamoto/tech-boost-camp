@@ -33,6 +33,7 @@ jobs:
       TF_VAR_compartment_id: ${{ vars.OCI_COMPARTMENT_OCID }}
       TF_VAR_auth: SecurityToken
       TF_VAR_ssh_public_key: ${{ vars.TF_VAR_SSH_PUBLIC_KEY }}
+      TF_VAR_backend_image_url: ${{ vars.TF_VAR_BACKEND_IMAGE_URL }}
 
     steps:
       - name: Checkout
