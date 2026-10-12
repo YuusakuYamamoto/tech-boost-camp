@@ -121,7 +121,20 @@ jobs:
         run: terraform plan -out=tfplan
 
       - name: Terraform apply
-        run: terraform apply -auto-approve tfplan
+        # A1 の OutOfCapacity は一時的なため、再 plan（state が進むため tfplan は再利用不可）して再試行する
+        run: |
+          set -o pipefail
+          for attempt in 1 2 3 4 5; do
+            if terraform apply -auto-approve tfplan 2>&1 | tee apply.log; then
+              exit 0
+            fi
+            if ! grep -q "OutOfCapacity" apply.log || [ "$attempt" -eq 5 ]; then
+              exit 1
+            fi
+            echo "OutOfCapacity (attempt $attempt/5). Retrying in 120s..."
+            sleep 120
+            terraform plan -out=tfplan
+          done
 
       - name: Notify on failure
         if: failure()
