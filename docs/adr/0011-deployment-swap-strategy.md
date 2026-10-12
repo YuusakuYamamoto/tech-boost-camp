@@ -42,7 +42,7 @@ OCI Container Instances は**イミュータブル**であることを API リ�
 
 理由は、アプリケーション本体と OCIR のイメージがまだ存在せず、リリース手順を設計する材料が揃っていないため。インフラの到達点（LB からバックエンドに疎通すること）の確認を優先する。
 
-`modules/container_app/` で Container Instance を作成し、LB バックエンドに登録する。イメージタグはルートモジュールの変数として受け取る。`image_url` は変更時に置き換えが発生する属性のため、**タグ変数を書き換えて apply するだけでインスタンスの入れ替えが成立する**。`-replace` の経路を別途用意する必要はない。ダウンタイムを抑えるため `lifecycle { create_before_destroy = true }` を付ける。
+`modules/container_app/` で Container Instance を作成し、LB バックエンドに登録する。イメージタグはルートモジュールの変数として受け取る。`image_url` は変更時に置き換えが発生する属性のため、**タグ変数を書き換えて apply するだけでインスタンスの入れ替えが成立する**。`-replace` の経路を別途用意する必要はない。プライベート IP は固定値を割り当てるため、`create_before_destroy` は使わない（新旧のインスタンスが同じ IP を同時に保持できず衝突するため）。置き換え中は LB が 502 を返す。ヘルスチェックの成功を待ってから切り替える方式は Phase 8 の `deploy.sh` で扱う。
 
 Phase 8 で上記手順 1〜5 の `deploy.sh` に移行する場合は、`terraform state rm` で Container Instance をステートから外したうえでモジュールを削除する。Terraform 管理のまま継続する場合は変更不要。
 
@@ -84,3 +84,4 @@ Terraform がリソースを保持したまま、CD パイプラインがイメ�
 
 - ロールバックは旧イメージタグを指定して `deploy.sh` を再実行するだけで可能
 - Phase 7 では Terraform 管理、Phase 8 でパターン A（`deploy.sh`）に移行するかを再判断する、という二段構えになっている。移行する場合のコストは `terraform state rm` + モジュール削除の一度きりで、後戻りできない選択ではない
+- LB Backend の `ip_address` は非 Updatable。プライベート IP を固定することで Backend が Container Instance のライフサイクルから切り離され、イメージ更新時に LB 側の構成に差分が出ない
