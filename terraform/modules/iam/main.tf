@@ -61,9 +61,14 @@ resource "oci_identity_policy" "runtime" {
   name           = "${var.app_name}-runtime-policy"
   description    = "Runtime permissions for ${var.app_name} Container Instances, VMs and Certificate Authorities"
 
+  # OCIR からの pull はリソースプリンシパル + IAM ポリシーで解決する。同一テナンシーの
+  # Container Registry では image pull secret（Vault 連携）は使わない。
+  # Docs: https://docs.oracle.com/en-us/iaas/Content/container-instances/vault-secrets-image-authorization.htm
+  # Docs: https://docs.oracle.com/en-us/iaas/Content/Registry/Concepts/registrypolicyrepoaccess.htm
   statements = [
     "Allow dynamic-group ${oci_identity_dynamic_group.db.name} to read buckets in compartment id ${var.compartment_id}",
     "Allow dynamic-group ${oci_identity_dynamic_group.app.name} to read secret-family in compartment id ${var.compartment_id}",
+    "Allow dynamic-group ${oci_identity_dynamic_group.app.name} to read repos in compartment id ${var.compartment_id}",
     "Allow dynamic-group ${oci_identity_dynamic_group.db.name} to read secret-family in compartment id ${var.compartment_id}",
     "Allow dynamic-group ${oci_identity_dynamic_group.db.name} to manage objects in compartment id ${var.compartment_id} where target.bucket.name='${var.backup_bucket_name}'",
     "Allow dynamic-group ${oci_identity_dynamic_group.db.name} to read objects in compartment id ${var.compartment_id} where target.bucket.name='${var.config_bucket_name}'",
