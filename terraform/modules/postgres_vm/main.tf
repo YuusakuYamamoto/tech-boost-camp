@@ -88,8 +88,16 @@ resource "oci_core_instance" "this" {
   # ブートボリューム上の構成（Docker / OCI CLI / /opt 配下 / systemd / cron）が失われる。
   # 新規作成時は最新を拾い、既存インスタンスは作成時点のイメージに固定する。
   # イメージの更新は意図的な VM 再作成でのみ行う。
+  #
+  # defined_tags はマップ全体を置き換える属性のため、config に書いていない
+  # Oracle-Tags（OCI が自動付与する CreatedBy / CreatedOn）が削除対象になる。
+  # 値は作成時に決まるもので config に書けないため、キー単位で無視する。
   lifecycle {
-    ignore_changes = [source_details[0].source_id]
+    ignore_changes = [
+      source_details[0].source_id,
+      defined_tags["Oracle-Tags.CreatedBy"],
+      defined_tags["Oracle-Tags.CreatedOn"],
+    ]
   }
 }
 
