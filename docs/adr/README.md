@@ -6,7 +6,7 @@
 
 | #    | タイトル                                                        | Status   |
 | ---- | --------------------------------------------------------------- | -------- |
-| 0001 | デプロイプラットフォームに OCI Container Instances を採用       | Proposed |
+| 0001 | デプロイプラットフォームに Compute VM + Docker Compose を採用   | Proposed |
 | 0002 | PostgreSQL は VM 上の Docker でセルフホスト運用                 | Proposed |
 | 0003 | Next.js は SSR 前提で運用する                                   | Proposed |
 | 0004 | 単一 VCN によるネットワーク基盤                                 | Proposed |
