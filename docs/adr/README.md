@@ -16,11 +16,11 @@
 | 0008 | コンテナレジストリに OCIR を採用                                | Proposed |
 | 0009 | CI/CD パイプラインを役割別に分離                                | Proposed |
 | 0010 | デプロイトリガに `deployment/{app}` ブランチを採用              | Proposed |
-| 0011 | Container Instance 切替方式（パターン A・割り切り型）           | Proposed |
+| 0011 | アプリケーションの入れ替えは Docker Compose の再作成で行う      | Proposed |
 | 0012 | ヘルスチェックを liveness / readiness の 2 段で実装             | Proposed |
 | 0013 | GitHub Actions → OCI 認証に OIDC 連携を採用                     | Proposed |
 | 0014 | シークレットストレージに OCI Vault を採用                       | Proposed |
-| 0015 | シークレット注入をエントリポイントスクリプトで行う              | Proposed |
+| 0015 | シークレット注入はホストの起動スクリプトで行う                  | Proposed |
 | 0016 | アプリケーション認証は Google アカウント + allowlist            | Proposed |
 | 0017 | 監視・アラートの初期方針                                        | Proposed |
 | 0018 | DB VM の OS に Oracle Linux を採用                              | Proposed |
