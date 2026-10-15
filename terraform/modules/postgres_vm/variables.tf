@@ -53,3 +53,11 @@ variable "db_password_secret_id" {
   type        = string
   description = "OCID of the Vault secret holding the PostgreSQL password."
 }
+
+# Dynamic Group のマッチングルールが参照する定義済みタグ（ADR-0022）。
+# ルート側で "<名前空間>.role" = "db" の形で渡す。
+variable "defined_tags" {
+  type        = map(string)
+  description = "Defined tags applied to the instance. Keys are in <namespace>.<key> form."
+  default     = {}
+}

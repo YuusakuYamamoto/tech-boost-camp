@@ -1,87 +1,108 @@
-# ADR-0011: Container Instance 切替方式（パターン A・割り切り型）
+# ADR-0011: アプリケーションの入れ替えは Docker Compose の再作成で行う
 
 - **Status**: Proposed
 - **Date**: 2026-04-25
 - **Deciders**: Yusaku
 
+> **改訂（2026-10-15）**: ADR-0001 の改訂（Container Instances → Compute VM + Docker Compose）に伴い、全面的に書き換えた。当初は Container Instance を差し替えるパターン A（`scripts/deploy.sh`）を定めていたが、実行基盤が変わったため前提ごと変更している。
+
 ## Context
 
-Container Instances は ECS の Service に相当するオーケストレーション機構を持たない。デプロイ時の Container Instance 差し替えは自前で設計する必要がある。
+新しいイメージをリリースする際の、実行中コンテナの入れ替え方を決める必要がある。
 
-選択肢：
+アプリは `tbcamp-app-vm`（Compute VM）上で Docker Compose により実行する（ADR-0001）。LB のバックエンドには**この VM の固定プライベート IP** が登録される。
 
-- **パターン A（割り切り型）**: 各役割の Container Instance は 1 つ。新インスタンスを起動し、ヘルスチェック後に LB バックエンドセットを差し替え、旧インスタンスを停止
-- **パターン B（Blue/Green 型）**: 各役割で常時 2 インスタンスを稼働させ、LB のバックエンドセットでローテーション
+ここが Container Instances との決定的な違いになる。
 
-個人アプリで、利用者が仲間内であり、数十秒のダウンタイムは許容できる。
+| | Container Instances | Compute VM + Compose |
+| -- | ------------------- | -------------------- |
+| イメージの差し替え | インスタンスの再作成が必須（イミュータブル） | コンテナの再作成。ホストは変わらない |
+| LB バックエンドの IP | インスタンスごとに変わる | **変わらない** |
+| 入れ替え時の LB 操作 | バックエンドの登録変更が必要 | **不要** |
 
-### Phase 7 Step 10 時点での確認（2026-10-10 追記）
-
-OCI Container Instances は**イミュータブル**であることを API リファレンスで確認した。既存のインスタンスに対する更新 API（`UpdateContainerInstance` / `UpdateContainer`）が受け付けるのは `displayName` / `freeformTags` / `definedTags` のみで、**イメージ URL・環境変数・起動コマンドを変更する経路が存在しない**。
+Container Instances の更新 API（`UpdateContainerInstance` / `UpdateContainer`）が受け付けるのは `displayName` とタグのみで、イメージ URL・環境変数・起動コマンドを変更する経路がない。これが「イミュータブル」と言える根拠である。
 
 <!-- Docs: https://docs.oracle.com/en-us/iaas/tools/python/latest/api/container_instances/models/oci.container_instances.models.UpdateContainerInstanceDetails.html -->
 <!-- Docs: https://docs.oracle.com/en-us/iaas/tools/python/latest/api/container_instances/models/oci.container_instances.models.UpdateContainerDetails.html -->
 
-したがってイメージの差し替えは常に「新しい Container Instance の作成 + 旧インスタンスの削除」になる。ECS のタスク定義のように「リソースを維持したまま中身だけ差し替える」形は取れない。本 ADR が新インスタンス起動 → ヘルスチェック → 切替 → 旧削除という手順を定めているのは、この制約への対応である。
+**LB のバックエンド登録がデプロイのたびに変化しない**ため、当初 ADR が定めていた「新インスタンス起動 → ヘルスチェック → バックエンド差し替え → 旧削除」という手順そのものが不要になる。
+
+利用者は仲間内であり、数十秒のダウンタイムは許容できる。
 
 ## Decision
 
-**パターン A** で運用する。各役割の Container Instance は常時 1 つとし、デプロイは以下の手順を実行する `scripts/deploy.sh` で行う：
+**`docker compose pull` + `docker compose up -d` による再作成**で入れ替える。
 
-1. 新 Container Instance を新イメージタグで起動
-2. OCI LB の backend-health API をポーリングして healthy になるまで待機
-3. LB バックエンドセットに新 Backend を追加
-4. 旧 Backend を LB から削除
-5. 旧 Container Instance を削除
+### 手順
 
-タグ管理: 新規作成時は `role=new`、切替成功後に `role=current` に昇格させ、現役インスタンスを識別可能にする。
+1. 新しいイメージタグを反映した `docker-compose.yml` を `tbcamp-config` バケットにアップロードする
+2. アプリ VM 上で設定を再取得し、コンテナを再作成する
 
-### Phase 7 での扱い（2026-10-10 追記）
+```bash
+sudo systemctl restart tbcamp-app-bootstrap.service
+```
 
-**Phase 7（インフラ構築）の段階では Container Instance を Terraform で管理する。`scripts/deploy.sh` の実装は CD パイプラインの構築（Phase 8 以降）に合わせて行う。**
+起動スクリプトが以下を行う。
 
-理由は、アプリケーション本体と OCIR のイメージがまだ存在せず、リリース手順を設計する材料が揃っていないため。インフラの到達点（LB からバックエンドに疎通すること）の確認を優先する。
+- `tbcamp-config` バケットから `docker-compose.yml` を取得
+- Vault からシークレットを取得し `.env` に書き出す（ADR-0015）
+- `docker compose pull` でイメージを取得
+- `docker compose up -d` でコンテナを再作成
 
-`modules/container_app/` で Container Instance を作成し、LB バックエンドに登録する。イメージタグはルートモジュールの変数として受け取る。`image_url` は変更時に置き換えが発生する属性のため、**タグ変数を書き換えて apply するだけでインスタンスの入れ替えが成立する**。`-replace` の経路を別途用意する必要はない。プライベート IP は固定値を割り当てるため、`create_before_destroy` は使わない（新旧のインスタンスが同じ IP を同時に保持できず衝突するため）。置き換え中は LB が 502 を返す。ヘルスチェックの成功を待ってから切り替える方式は Phase 8 の `deploy.sh` で扱う。
+3. LB のヘルスチェックが healthy に戻ることを確認する
 
-Phase 8 で上記手順 1〜5 の `deploy.sh` に移行する場合は、`terraform state rm` で Container Instance をステートから外したうえでモジュールを削除する。Terraform 管理のまま継続する場合は変更不要。
+### イメージタグの扱い
+
+`latest` は使わない。`docker-compose.yml` に具体的なタグを記述し、バケットのバージョニングで履歴を残す。ロールバックは旧タグの compose をアップロードして再起動するだけで済む。
+
+### Terraform の責務
+
+Terraform が管理するのは VM・NSG・LB バックエンド登録までとする。**コンテナの入れ替えは Terraform の管轄外**である。アプリのリリースのたびに Terraform を流す必要はない。
+
+`docker-compose.yml` を Terraform で `tbcamp-config` バケットに配置する場合（`postgres_vm` の `oci_objectstorage_object.compose` と同じ形）、イメージタグの変更が Terraform の差分として現れる。この扱いは Phase 8 の CD 設計で決める。
 
 ## Alternatives Considered
 
-### パターン B（Blue/Green）を最初から採用
+### パターン A: 新インスタンスを起動してから LB バックエンドを差し替える（当初の決定）
+
+Container Instances を前提とした方式。新 Container Instance を起動し、backend-health API をポーリングして healthy になってから LB バックエンドセットを差し替え、旧インスタンスを削除する。
 
 - **不採用理由**:
-  - Container Instance を常時 2 台稼働させるためコストが約 2 倍
+  - 実行基盤を Compute VM に変更したため、前提が消滅した（ADR-0001）
+  - VM 上では LB バックエンドの IP が変わらないため、差し替える対象がない
+  - ヘルスチェックを待ってから切り替える意義は、コンテナ再作成の数秒〜数十秒に対して見合わない
+
+### パターン B: Blue/Green（常時 2 系統を稼働）
+
+- **不採用理由**:
+  - アプリ VM をもう 1 台増やすことになり、A1 枠（4 OCPU / 24 GB）の残りが 1 OCPU / 6 GB になる。将来の拡張余地が狭まる
   - 個人アプリでダウンタイム数十秒は許容できる
-  - 後からパターン B に移行する場合も「Container Instance を 1 つ追加して LB バックエンドセットに登録」で済む
+  - 必要になった時点で、アプリ VM を 1 台追加して LB バックエンドに登録すれば移行できる
 
-### Terraform で Container Instance のライフサイクル全てを管理
+### ゼロダウンタイムを狙って同一 VM 上で新旧コンテナを並走させる
+
+ポートを変えて新コンテナを起動し、LB バックエンドのポートを切り替える方式。
 
 - **不採用理由**:
-  - 「ヘルスチェック待ち → LB 更新 → 旧停止」のような順序付き手続きと相性が悪い
-  - インフラのライフサイクル管理（Terraform）とアプリのデプロイ（スクリプト）は責務を分けるのが自然
-
-### Terraform で作成し、イメージタグを `ignore_changes` で無視する（ECS 型）
-
-Terraform がリソースを保持したまま、CD パイプラインがイメージだけを差し替える形。AWS ECS では `lifecycle { ignore_changes = [task_definition] }` として広く使われている。
-
-- **不採用理由**: OCI Container Instances では成立しない。Context に記載のとおりイメージを変更する更新 API が存在せず、差し替えは必ずインスタンスの削除と再作成になる。Terraform が追跡しているリソースそのものが消えるため、`ignore_changes` では差分を抑えられない
+  - LB バックエンドの `port` は更新不可（非 Updatable）で、差し替えにはリソースの再作成が必要
+  - 切り替えの順序制御を自前で書くことになり、得られるものに対して複雑すぎる
 
 ## Consequences
 
 ### Positive
 
-- 構成・運用がシンプル
-- コストが最小（Container Instance 1 台分のみ）
-- LB ヘルスチェックで新インスタンスの起動失敗時もユーザ影響を最小化
+- **LB の構成がデプロイに影響されない**。バックエンド登録は一度行えば以降変化しない
+- 入れ替え手順が `systemctl restart` の 1 コマンドに収まる
+- ロールバックは旧タグの compose を置き直すだけ
+- `postgres_vm` の `postgres-bootstrap.service` と同じ型のため、仕組みが 2 箇所で共通になる
 
 ### Negative / Trade-off
 
-- デプロイ時に数十秒のダウンタイムが発生する可能性
-- Container Instance 自体が異常終了した場合の自動再起動はない（手動対応）
+- コンテナ再作成の間（数秒〜数十秒）、LB がヘルスチェックに失敗して 502 を返す
+- frontend と backend が同じ Compose に属するため、**片方だけを入れ替えることが難しい**。両方が同時に再作成される
+- VM 自体が異常終了した場合の自動復旧はない。Docker の restart policy と systemd で部分的に補う
 
 ### Neutral
 
-- ロールバックは旧イメージタグを指定して `deploy.sh` を再実行するだけで可能
-- Phase 7 では Terraform 管理、Phase 8 でパターン A（`deploy.sh`）に移行するかを再判断する、という二段構えになっている。移行する場合のコストは `terraform state rm` + モジュール削除の一度きりで、後戻りできない選択ではない
-- LB Backend の `ip_address` は非 Updatable。プライベート IP を固定することで Backend が Container Instance のライフサイクルから切り離され、イメージ更新時に LB 側の構成に差分が出ない
+- 現時点では手動の `systemctl restart` を前提とする。自動化（イメージのビルド、OCIR への push、VM 上での再起動）は Phase 8 の CD パイプラインで扱う
+- 将来 Container Instances の容量が確保できるようになった場合、本 ADR の方式は使えなくなる。そのときは ADR-0001 とあわせて再検討する

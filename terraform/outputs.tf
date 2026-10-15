@@ -102,8 +102,3 @@ output "load_balancer_public_ip" {
   value       = module.load_balancer.public_ip
   description = "Public IP of the Load Balancer. Register this as the A record for y12u.com."
 }
-
-output "backend_container_instance_id" {
-  value       = module.container_app_backend.container_instance_id
-  description = "OCID of the backend Container Instance."
-}
