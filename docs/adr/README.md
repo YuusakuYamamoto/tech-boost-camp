@@ -27,6 +27,7 @@
 | 0019 | DNS は Xserver Domain で管理し、LB には予約パブリック IP を使う | Proposed |
 | 0020 | TLS 証明書は内部 CA で開始し、Let's Encrypt へ移行する          | Proposed |
 | 0021 | public リポジトリの PR コメントに OCID を出すことを許容する     | Proposed |
+| 0022 | インスタンスの権限分離に定義済みタグを使う                      | Proposed |
 
 ## Status の運用
 
