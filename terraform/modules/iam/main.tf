@@ -40,8 +40,10 @@ resource "oci_identity_tag" "role" {
 resource "oci_identity_dynamic_group" "app" {
   compartment_id = var.tenancy_id
   name           = "${var.app_name}-app-instances"
-  description    = "Container Instances in ${var.app_name} compartment for Instance Principal auth"
-  matching_rule  = "All {resource.type = 'computecontainerinstance', resource.compartment.id = '${var.compartment_id}'}"
+  description    = "Application Compute Instances in ${var.app_name} compartment for Instance Principal auth"
+  # Container Instance 用（resource.type = 'computecontainerinstance'）から、
+  # 定義済みタグで絞る形に変更した（ADR-0001 / ADR-0022）。
+  matching_rule = "All {instance.compartment.id = '${var.compartment_id}', tag.${oci_identity_tag_namespace.this.name}.${oci_identity_tag.role.name}.value = 'app'}"
 
   freeform_tags = {
     app        = var.app_name
@@ -54,10 +56,12 @@ resource "oci_identity_dynamic_group" "app" {
 resource "oci_identity_dynamic_group" "db" {
   compartment_id = var.tenancy_id
   name           = "${var.app_name}-db-instances"
-  description    = "Compute Instances in ${var.app_name} compartment for Instance Principal auth"
+  description    = "PostgreSQL Compute Instances in ${var.app_name} compartment for Instance Principal auth"
   # instance.compartment.id は Compute Instance 専用の属性で、対象種別を含意するため
   # resource.type の指定は不要。resource.compartment.id では実際にマッチしなかった。
-  matching_rule = "All {instance.compartment.id = '${var.compartment_id}'}"
+  # compartment 内の全 Compute Instance に一致してしまうため、定義済みタグで絞る
+  # （ADR-0022）。
+  matching_rule = "All {instance.compartment.id = '${var.compartment_id}', tag.${oci_identity_tag_namespace.this.name}.${oci_identity_tag.role.name}.value = 'db'}"
 
   freeform_tags = {
     app        = var.app_name
@@ -97,13 +101,21 @@ resource "oci_identity_policy" "runtime" {
   # Container Registry では image pull secret（Vault 連携）は使わない。
   # Docs: https://docs.oracle.com/en-us/iaas/Content/container-instances/vault-secrets-image-authorization.htm
   # Docs: https://docs.oracle.com/en-us/iaas/Content/Registry/Concepts/registrypolicyrepoaccess.htm
+  #
+  # db と app で権限を分けている（ADR-0022）。バックアップバケットへの書き込みは db のみ。
   statements = [
+    # --- db（PostgreSQL VM） ---
     "Allow dynamic-group ${oci_identity_dynamic_group.db.name} to read buckets in compartment id ${var.compartment_id}",
-    "Allow dynamic-group ${oci_identity_dynamic_group.app.name} to read secret-family in compartment id ${var.compartment_id}",
-    "Allow dynamic-group ${oci_identity_dynamic_group.app.name} to read repos in compartment id ${var.compartment_id}",
     "Allow dynamic-group ${oci_identity_dynamic_group.db.name} to read secret-family in compartment id ${var.compartment_id}",
     "Allow dynamic-group ${oci_identity_dynamic_group.db.name} to manage objects in compartment id ${var.compartment_id} where target.bucket.name='${var.backup_bucket_name}'",
     "Allow dynamic-group ${oci_identity_dynamic_group.db.name} to read objects in compartment id ${var.compartment_id} where target.bucket.name='${var.config_bucket_name}'",
+
+    # --- app（アプリケーション VM） ---
+    "Allow dynamic-group ${oci_identity_dynamic_group.app.name} to read secret-family in compartment id ${var.compartment_id}",
+    "Allow dynamic-group ${oci_identity_dynamic_group.app.name} to read objects in compartment id ${var.compartment_id} where target.bucket.name='${var.config_bucket_name}'",
+    "Allow dynamic-group ${oci_identity_dynamic_group.app.name} to read repos in compartment id ${var.compartment_id}",
+
+    # --- 証明書 CA ---
     "Allow dynamic-group ${oci_identity_dynamic_group.cert_authorities.name} to use keys in compartment id ${var.compartment_id}",
   ]
 

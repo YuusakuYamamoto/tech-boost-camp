@@ -74,6 +74,10 @@ module "postgres_vm" {
   config_bucket_name    = module.object_storage.config_bucket_name
   backup_bucket_name    = module.object_storage.bucket_name
   db_password_secret_id = module.vault.secret_ids["db-password"]
+
+  defined_tags = {
+    "${module.iam.tag_namespace_name}.${module.iam.role_tag_name}" = "db"
+  }
 }
 
 module "certificates" {

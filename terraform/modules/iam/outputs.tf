@@ -1,11 +1,11 @@
 output "app_dynamic_group_id" {
   value       = oci_identity_dynamic_group.app.id
-  description = "OCID of the Dynamic Group for Container Instances."
+  description = "OCID of the Dynamic Group for application Compute Instances."
 }
 
 output "db_dynamic_group_id" {
   value       = oci_identity_dynamic_group.db.id
-  description = "OCID of the Dynamic Group for Compute Instances."
+  description = "OCID of the Dynamic Group for the PostgreSQL Compute Instance."
 }
 
 output "cert_authorities_dynamic_group_id" {

@@ -78,6 +78,8 @@ resource "oci_core_instance" "this" {
     role       = "postgres-vm"
   }
 
+  defined_tags = var.defined_tags
+
   depends_on = [oci_objectstorage_object.compose]
 
   # data.oci_core_images は常に最新を返すため、Oracle Linux の月次更新のたびに
