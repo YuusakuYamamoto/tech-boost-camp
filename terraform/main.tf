@@ -103,30 +103,3 @@ module "load_balancer" {
   # HTTPS リスナーと redirect rule set の count は解決できる。
   certificate_ids = [module.certificates.certificate_id]
 }
-
-# frontend は Step 10b で追加する。10a では backend 1 台のみを作成し、
-# ネットワーク経路（NSG / Backend 登録 / ヘルスチェック）の確認と、
-# A1 無料枠の SKU 計上先の実測を行う。
-module "container_app_backend" {
-  source = "./modules/container_app"
-
-  compartment_id   = var.compartment_id
-  app_name         = local.app_name
-  role             = "backend"
-  subnet_id        = module.network.private_subnet_id
-  nsg_id           = module.network.app_security_group_id
-  lb_nsg_id        = module.network.lb_security_group_id
-  load_balancer_id = module.load_balancer.load_balancer_id
-  backend_set_name = module.load_balancer.backend_backend_set_name
-  private_ip       = "10.0.2.102"
-  port             = 4000
-  image_url        = var.backend_image_url
-
-  environment_variables = {
-    # 疎通確認用イメージ（traefik/whoami）の待ち受けポート指定。
-    # OCIR のアプリイメージに切り替える Step 10b で外す。
-    WHOAMI_PORT_NUMBER = "4000"
-
-    DB_HOST = module.postgres_vm.private_ip
-  }
-}
