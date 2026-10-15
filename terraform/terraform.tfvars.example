@@ -14,6 +14,3 @@ compartment_id = "ocid1.compartment.oc1..xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 # ssh public key
 ssh_public_key = "ssh-ed25519 AAAA... your-key-comment"
-
-# Backend container image URL (always pin a specific tag; never use latest)
-backend_image_url = "docker.io/traefik/whoami:v1.12.0"
