@@ -2,6 +2,38 @@
 # IAM Module - Dynamic Groups + Runtime Policy
 # =============================================================================
 
+# --- 定義済みタグ（インスタンスの役割） ---
+
+# Dynamic Group のマッチングルールはフリーフォームタグを参照できない。定義済みタグ
+# のみが `tag.<名前空間>.<キー>.value` の形で使える。
+# 名前空間は廃止（retire）してからでないと削除できないため、名前は変更しない前提で扱う。
+# Docs: https://docs.oracle.com/en-us/iaas/Content/Identity/dynamicgroups/Writing_Matching_Rules_to_Define_Dynamic_Groups.htm
+# Docs: https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/identity_tag_namespace
+resource "oci_identity_tag_namespace" "this" {
+  compartment_id = var.compartment_id
+  name           = var.app_name
+  description    = "Defined tags for ${var.app_name} resources"
+
+  freeform_tags = {
+    app        = var.app_name
+    managed-by = "terraform"
+    role       = "iam"
+  }
+}
+
+# Docs: https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/identity_tag
+resource "oci_identity_tag" "role" {
+  tag_namespace_id = oci_identity_tag_namespace.this.id
+  name             = "role"
+  description      = "Role of the instance (db / app). Used in dynamic group matching rules."
+
+  freeform_tags = {
+    app        = var.app_name
+    managed-by = "terraform"
+    role       = "iam"
+  }
+}
+
 # --- Dynamic Groups（テナンシーレベルで作成 — OCI の仕様） ---
 
 # Docs: https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/identity_dynamic_group
