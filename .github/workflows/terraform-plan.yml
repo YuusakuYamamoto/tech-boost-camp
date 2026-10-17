@@ -19,11 +19,16 @@ permissions:
   pull-requests: write
   id-token: write  # GitHub OIDC JWT の取得に必要
 
+# ランナーは ubuntu-24.04 に固定している。ubuntu-latest は 2026-10-19 から
+# 2026-11-19 にかけて Ubuntu 26.04 へ段階移行するため、移行期間中は実行ごとに
+# OS が変わりうる。ツールのバージョン差で CI が壊れるのを避けるための固定。
+# 26.04 への移行は、別環境で検証してから行う。
+# Docs: https://github.blog/changelog/2026-09-17-ubuntu-26-generally-available-and-latest-migration
 jobs:
   # Job 1: terraform 関連ファイルの変更有無を検出する
   detect-changes:
     name: Detect Changes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       terraform: ${{ steps.filter.outputs.terraform }}
     steps:
@@ -53,7 +58,7 @@ jobs:
     name: Terraform Plan (run)
     needs: detect-changes
     if: needs.detect-changes.outputs.terraform == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: terraform
@@ -237,7 +242,7 @@ jobs:
     name: Terraform Plan
     needs: [detect-changes, plan]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Check job results
         run: |
