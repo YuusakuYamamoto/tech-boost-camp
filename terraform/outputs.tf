@@ -102,3 +102,13 @@ output "load_balancer_public_ip" {
   value       = module.load_balancer.public_ip
   description = "Public IP of the Load Balancer. Register this as the A record for y12u.com."
 }
+
+output "app_vm_instance_id" {
+  value       = module.app_vm.instance_id
+  description = "OCID of the application VM."
+}
+
+output "app_vm_private_ip" {
+  value       = module.app_vm.private_ip
+  description = "Private IP of the application VM. Registered as the LB backend."
+}
