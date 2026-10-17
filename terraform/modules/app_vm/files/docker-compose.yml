@@ -1,0 +1,41 @@
+# 疎通確認用の暫定構成。アプリのイメージができたら差し替える。
+# 差し替えは Object Storage のファイルを更新して
+# `systemctl restart tbcamp-app-bootstrap.service` を実行するだけでよく、
+# Terraform の変更は不要（ADR-0011）。
+#
+# traefik/whoami は /health に 200 を返し、WHOAMI_PORT_NUMBER で待ち受けポートを
+# 変更できる。v1.12.0 が arm64 に対応していることをタグ一覧で確認済み。
+services:
+  frontend:
+    image: traefik/whoami:v1.12.0
+    container_name: tbcamp-frontend
+    restart: always
+    env_file:
+      - .env
+    environment:
+      WHOAMI_PORT_NUMBER: 3000
+      TZ: Asia/Tokyo
+    ports:
+      - "3000:3000"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  backend:
+    image: traefik/whoami:v1.12.0
+    container_name: tbcamp-backend
+    restart: always
+    env_file:
+      - .env
+    environment:
+      WHOAMI_PORT_NUMBER: 4000
+      TZ: Asia/Tokyo
+    ports:
+      - "4000:4000"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
