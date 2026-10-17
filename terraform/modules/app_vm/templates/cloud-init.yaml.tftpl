@@ -1,0 +1,55 @@
+#cloud-config
+package_update: true
+package_upgrade: false
+
+packages:
+  - dnf-plugins-core
+
+write_files:
+  - path: /opt/scripts/bootstrap-app.sh
+    permissions: '0755'
+    owner: root:root
+    encoding: b64
+    content: ${bootstrap_b64}
+
+  - path: /etc/systemd/system/${app_name}-app-bootstrap.service
+    permissions: '0644'
+    owner: root:root
+    content: |
+      [Unit]
+      Description=Bootstrap the application stack on ${app_name}
+      After=docker.service network-online.target
+      Requires=docker.service
+      Wants=network-online.target
+      # Dynamic Group のマッチングと IAM の反映にはラグがあるため、初回起動で
+      # Vault へのアクセスが失敗しうる。10 分のあいだに 10 回までリトライする。
+      StartLimitIntervalSec=600
+      StartLimitBurst=10
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+      ExecStart=/opt/scripts/bootstrap-app.sh
+      Restart=on-failure
+      RestartSec=30s
+      StandardOutput=journal
+      StandardError=journal
+
+      [Install]
+      WantedBy=multi-user.target
+
+runcmd:
+  # Docker CE
+  - dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+  - dnf install -y --allowerasing docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  - systemctl enable --now docker
+  # OCI CLI
+  - dnf install -y oraclelinux-developer-release-el9
+  - dnf install -y python39-oci-cli
+  # ユーザー設定
+  - usermod -aG docker opc
+  - usermod -aG wheel opc
+  - chown -R opc:opc /home/opc
+  # 起動
+  - systemctl daemon-reload
+  - systemctl enable --now ${app_name}-app-bootstrap.service
