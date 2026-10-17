@@ -5,13 +5,18 @@
 #
 # traefik/whoami は /health に 200 を返し、WHOAMI_PORT_NUMBER で待ち受けポートを
 # 変更できる。v1.12.0 が arm64 に対応していることをタグ一覧で確認済み。
+#
+# 暫定フェーズでは env_file を意図的に外している。whoami は ?env=true で
+# os.Environ() を無条件に出力するため（app.go L275-279 / L289-294）、
+# .env を読ませると公開 LB 経由で DB_PASSWORD と SESSION_SECRET が漏れる。
+# bootstrap-app.sh は set -euo pipefail なので、Vault から取得できなければ
+# compose 起動に到達しない。経路の検証価値は env_file なしでも保たれる。
+# 本番イメージに差し替えるときに env_file を戻すこと。
 services:
   frontend:
     image: traefik/whoami:v1.12.0
     container_name: tbcamp-frontend
     restart: always
-    env_file:
-      - .env
     environment:
       WHOAMI_PORT_NUMBER: 3000
       TZ: Asia/Tokyo
@@ -27,8 +32,6 @@ services:
     image: traefik/whoami:v1.12.0
     container_name: tbcamp-backend
     restart: always
-    env_file:
-      - .env
     environment:
       WHOAMI_PORT_NUMBER: 4000
       TZ: Asia/Tokyo

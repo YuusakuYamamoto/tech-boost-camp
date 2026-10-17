@@ -15,7 +15,7 @@ output "private_subnet_id" {
 
 output "app_security_group_id" {
   value       = module.network.app_security_group_id
-  description = "OCID of the NSG for Container Instances (app)."
+  description = "OCID of the NSG for the application VM."
 }
 
 output "db_security_group_id" {
@@ -50,7 +50,7 @@ output "pg_backups_bucket_name" {
 
 output "app_dynamic_group_id" {
   value       = module.iam.app_dynamic_group_id
-  description = "OCID of the Dynamic Group for Container Instances."
+  description = "OCID of the Dynamic Group for the application VM."
 }
 
 output "db_dynamic_group_id" {
