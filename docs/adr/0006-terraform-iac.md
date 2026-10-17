@@ -21,7 +21,7 @@ OCI 上のインフラリソース（VCN・Container Instance・LB・PostgreSQL 
 terraform/
 ├── modules/             # 必要に応じてモジュール化
 │   ├── network/
-│   ├── container_app/
+│   ├── app_vm/
 │   ├── postgres_vm/
 │   └── ...
 └── main.tf              # ルートモジュール、モジュールを呼び出す

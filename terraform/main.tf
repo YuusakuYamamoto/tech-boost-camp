@@ -103,3 +103,29 @@ module "load_balancer" {
   # HTTPS リスナーと redirect rule set の count は解決できる。
   certificate_ids = [module.certificates.certificate_id]
 }
+
+# frontend と backend のコンテナを 1 台の VM に同居させる（ADR-0001）。
+# Container Instances は CI.Standard.A1.Flex の容量が確保できないため採らない。
+module "app_vm" {
+  source = "./modules/app_vm"
+
+  compartment_id            = var.compartment_id
+  app_name                  = local.app_name
+  subnet_id                 = module.network.private_subnet_id
+  nsg_id                    = module.network.app_security_group_id
+  lb_nsg_id                 = module.network.lb_security_group_id
+  load_balancer_id          = module.load_balancer.load_balancer_id
+  frontend_backend_set_name = module.load_balancer.frontend_backend_set_name
+  backend_backend_set_name  = module.load_balancer.backend_backend_set_name
+  private_ip                = "10.0.2.102"
+  ssh_public_key            = var.ssh_public_key
+  namespace                 = module.object_storage.namespace
+  config_bucket_name        = module.object_storage.config_bucket_name
+  db_host                   = module.postgres_vm.private_ip
+  db_password_secret_id     = module.vault.secret_ids["db-password"]
+  session_secret_id         = module.vault.secret_ids["session-secret"]
+
+  defined_tags = {
+    "${module.iam.tag_namespace_name}.${module.iam.role_tag_name}" = "app"
+  }
+}

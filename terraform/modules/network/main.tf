@@ -230,9 +230,9 @@ resource "oci_core_network_security_group" "lb" {
 # NAT Gateway を経由する。宛先の限定は行っていない（ADR-0004 の Negative 節と同じ方針。
 # postgres_vm の db_all_egress と揃えている）。
 #
-# 「NSG の箱は network、ルールは利用側のモジュール」という規約の例外。app NSG は
-# frontend / backend の 2 つの container_app 呼び出しで共有されるため、利用側に置くと
-# 同一ルールが 2 本できてしまう。ingress は役割ごとにポートが異なるため利用側が持つ。
+# 「NSG の箱は network、ルールは利用側のモジュール」という規約の例外。egress の
+# 開放範囲は NSG 統一方針の帰結であり、ADR-0004 が VCN レベルの論点として扱っている。
+# ingress はポートごとに分かれるため利用側（app_vm）が持つ。
 # Docs: https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/core_network_security_group_security_rule
 resource "oci_core_network_security_group_security_rule" "app_all_egress" {
   network_security_group_id = oci_core_network_security_group.app.id
