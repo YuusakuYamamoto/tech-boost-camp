@@ -25,7 +25,7 @@ Step 10 の検証は「起動スクリプトが途中で失敗したら停止す
 - Bastion は `tbcamp` コンパートメントに 1 つ作成し、接続先サブネットはプライベートサブネットとする
 - 接続元の制限（`client_cidr_block_allow_list`）は設けない。利用者の回線が固定 IP ではないため。接続には OCI の認可とセッションごとの SSH 鍵の双方を要するため、素通しにはならない
 - 接続先サブネットには、Bastion のプライベートエンドポイントから VM の 22 番ポートへの送信を許可する Security List を 1 つ追加する
-- VM 側の ingress は NSG で、Bastion のプライベートエンドポイントの IP アドレスのみに限定する
+- VM 側の ingress は NSG で、Bastion のプライベートエンドポイントの IP アドレスのみに限定する。ただし DB 側の NSG には VCN 全体（`10.0.0.0/16`）からの 22 番を許可する既存ルール（`db_ssh_ingress`）が残っており、これを削除するまで DB については限定が成立しない。削除は Bastion の疎通確認後に別途行う
 
 ## Alternatives Considered
 
@@ -60,7 +60,7 @@ Step 10 の検証は「起動スクリプトが途中で失敗したら停止す
 
 ### Negative / Trade-off
 
-- Bastion のプライベートエンドポイントは NSG に所属できないため、NSG 統一の方針（ADR-0004）に対する例外として Security List を 1 つ持つことになる。この Security List は送信ルールのみを持ち、ingress は従来どおり NSG で制御する
+- Bastion のプライベートエンドポイントは NSG に所属できないため、NSG 統一の方針に対する例外として Security List を 1 つ持つことになる。この Security List は送信ルールのみを持ち、ingress は従来どおり NSG で制御する
 - Managed SSH セッションでは VM 上のエージェントが OCI の Bastion バックエンドへ接続する。この経路は Service Gateway を通るため、Service Gateway の対象が Oracle Services Network 全体を含んでいる必要がある
 
 <!-- Docs: https://docs.oracle.com/iaas/Content/Bastion/Tasks/connectingtosessions.htm -->
