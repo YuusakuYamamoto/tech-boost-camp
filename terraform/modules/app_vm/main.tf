@@ -73,6 +73,16 @@ resource "oci_core_instance" "this" {
     user_data           = base64encode(local.cloud_init)
   }
 
+  # Bastion の Managed SSH セッションに必要（ADR-0023）。agent_config は更新可能な
+  # 属性で、VM の再作成は伴わない。
+  # Docs: https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/core_instance
+  agent_config {
+    plugins_config {
+      name          = "Bastion"
+      desired_state = "ENABLED"
+    }
+  }
+
   freeform_tags = {
     app        = var.app_name
     managed-by = "terraform"

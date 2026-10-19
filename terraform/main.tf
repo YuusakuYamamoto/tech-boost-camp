@@ -129,3 +129,20 @@ module "app_vm" {
     "${module.iam.tag_namespace_name}.${module.iam.role_tag_name}" = "app"
   }
 }
+
+# プライベートサブネットの VM に入る手段（ADR-0023）。
+module "bastion" {
+  source = "./modules/bastion"
+
+  compartment_id   = var.compartment_id
+  app_name         = local.app_name
+  bastion_name     = "${local.app_name}-bastion"
+  target_subnet_id = module.network.private_subnet_id
+
+  target_nsg_ids = {
+    app = module.network.app_security_group_id
+    db  = module.network.db_security_group_id
+  }
+
+  client_cidr_block_allow_list = ["0.0.0.0/0"]
+}

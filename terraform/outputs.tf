@@ -112,3 +112,13 @@ output "app_vm_private_ip" {
   value       = module.app_vm.private_ip
   description = "Private IP of the application VM. Registered as the LB backend."
 }
+
+output "bastion_id" {
+  value       = module.bastion.bastion_id
+  description = "OCID of the Bastion."
+}
+
+output "bastion_private_endpoint_ip" {
+  value       = module.bastion.bastion_private_endpoint_ip
+  description = "IP address of the Bastion private endpoint."
+}
