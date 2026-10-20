@@ -46,6 +46,39 @@ resource "oci_core_default_security_list" "this" {
   }
 }
 
+# --- Bastion 用 Security List（NSG 統一方針の例外、ADR-0023） ---
+
+# Bastion のプライベートエンドポイントは NSG に所属できないため、Default Security
+# List を空にしている本構成ではルールが一切ない状態になる。エンドポイントから VM の
+# 22 番への送信だけをここで許可する。ステートフルなので戻りの通信は自動で通る。
+# ingress は書かない。Security List はサブネット内のすべての VNIC に効くため、VM の
+# ingress は NSG 側（bastion モジュール）で絞る。
+# Docs: https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/core_security_list
+resource "oci_core_security_list" "bastion_egress" {
+  compartment_id = var.compartment_id
+  vcn_id         = oci_core_vcn.this.id
+  display_name   = "${var.app_name}-bastion-egress"
+
+  egress_security_rules {
+    protocol         = "6"
+    destination      = var.private_subnet_cidr
+    destination_type = "CIDR_BLOCK"
+    stateless        = false
+    description      = "Bastion private endpoint to VMs (SSH)"
+
+    tcp_options {
+      min = 22
+      max = 22
+    }
+  }
+
+  freeform_tags = {
+    app        = var.app_name
+    managed-by = "terraform"
+    role       = "bastion"
+  }
+}
+
 # --- Gateways ---
 
 # Docs: https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/core_internet_gateway
@@ -172,7 +205,10 @@ resource "oci_core_subnet" "private" {
   prohibit_internet_ingress  = true
   prohibit_public_ip_on_vnic = true
   route_table_id             = oci_core_route_table.private.id
-  security_list_ids          = [oci_core_vcn.this.default_security_list_id]
+  security_list_ids = [
+    oci_core_vcn.this.default_security_list_id,
+    oci_core_security_list.bastion_egress.id,
+  ]
 
   freeform_tags = {
     app        = var.app_name
