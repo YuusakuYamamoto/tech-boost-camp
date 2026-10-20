@@ -134,9 +134,13 @@ module "app_vm" {
 module "bastion" {
   source = "./modules/bastion"
 
-  compartment_id   = var.compartment_id
-  app_name         = local.app_name
-  bastion_name     = "${local.app_name}-bastion"
+  compartment_id = var.compartment_id
+  app_name       = local.app_name
+  # OCI Bastion の名前は英数字のみ。ハイフンを入れると CreateBastion が
+  # 404 NotAuthorizedOrNotFound で失敗する（命名規約 ${app_name}-${role}
+  # の例外）。
+  # Docs: https://docs.oracle.com/en-us/iaas/Content/Bastion/Tasks/create-bastion.htm
+  bastion_name     = "${local.app_name}bastion"
   target_subnet_id = module.network.private_subnet_id
 
   target_nsg_ids = {
