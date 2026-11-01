@@ -69,6 +69,8 @@ jobs:
       TF_VAR_compartment_id: ${{ vars.OCI_COMPARTMENT_OCID }}
       TF_VAR_auth: SecurityToken
       TF_VAR_ssh_public_key: ${{ vars.TF_VAR_SSH_PUBLIC_KEY }}
+      TF_VAR_notification_email: ${{ vars.TF_VAR_NOTIFICATION_EMAIL }}
+      TF_VAR_budget_amount: ${{ vars.TF_VAR_BUDGET_AMOUNT }}
       # OCI への認証は OIDC トークン交換で取得した UPST 経由
 
     steps:

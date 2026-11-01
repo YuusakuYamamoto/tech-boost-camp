@@ -6,7 +6,11 @@
 
 # Docs: https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/bastion_bastion
 resource "oci_bastion_bastion" "this" {
-  bastion_type                 = "standard"
+  # OCI が返す値は大文字の "STANDARD"。小文字で書くと毎回差分が出て、
+  # bastion_type は ForceNew のため Bastion が作り直される。プロバイダーの
+  # ドキュメントは "Use `standard`" と書いているが実態と合わない。
+  # Docs: https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/bastion_bastion
+  bastion_type                 = "STANDARD"
   compartment_id               = var.compartment_id
   target_subnet_id             = var.target_subnet_id
   name                         = var.bastion_name

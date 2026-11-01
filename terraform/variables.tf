@@ -22,3 +22,17 @@ variable "ssh_public_key" {
   type        = string
   description = "SSH public key to inject into the PostgreSQL VM."
 }
+
+variable "notification_email" {
+  type        = string
+  description = "Email address that receives budget alerts and alarm notifications."
+
+  # public リポジトリであり、plan 出力は PR コメントにそのまま貼られる。
+  # sensitive にすることで endpoint / recipients が (sensitive value) になる。
+  sensitive = true
+}
+
+variable "budget_amount" {
+  type        = number
+  description = "Monthly budget as a whole number, in the currency of the tenancy's rate card (JPY for this tenancy)."
+}
