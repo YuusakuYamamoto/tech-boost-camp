@@ -122,3 +122,13 @@ output "bastion_private_endpoint_ip" {
   value       = module.bastion.bastion_private_endpoint_ip
   description = "IP address of the Bastion private endpoint."
 }
+
+output "alarms_topic_id" {
+  value       = module.monitoring.alarms_topic_id
+  description = "OCID of the Notifications topic used as the alarm destination."
+}
+
+output "budget_id" {
+  value       = module.monitoring.budget_id
+  description = "OCID of the budget. Created in the root compartment, not in tbcamp."
+}
