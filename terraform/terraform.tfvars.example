@@ -14,3 +14,13 @@ compartment_id = "ocid1.compartment.oc1..xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 # ssh public key
 ssh_public_key = "ssh-ed25519 AAAA... your-key-comment"
+
+# Email address for budget alerts and monitoring alarms.
+# The Notifications subscription stays PENDING until you click the
+# confirmation link sent to this address.
+notification_email = "you@example.com"
+
+# Monthly budget as a whole number, in the currency of your rate card.
+# This tenancy's rate card is JPY (the Console shows "予算金額(JPY)"),
+# so 1500 is roughly USD 10. It is NOT always USD — check before changing.
+budget_amount = 1500

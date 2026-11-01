@@ -150,3 +150,15 @@ module "bastion" {
 
   client_cidr_block_allow_list = ["0.0.0.0/0"]
 }
+
+# コスト超過の防止と異常検知（ADR-0017）。
+# Budget だけはルートコンパートメントに作られるため tenancy_id を渡す。
+module "monitoring" {
+  source = "./modules/monitoring"
+
+  tenancy_id         = var.tenancy_id
+  compartment_id     = var.compartment_id
+  app_name           = local.app_name
+  notification_email = var.notification_email
+  budget_amount      = var.budget_amount
+}
