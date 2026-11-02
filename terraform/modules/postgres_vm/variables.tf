@@ -23,12 +23,6 @@ variable "app_nsg_id" {
   description = "OCID of the App NSG (used as source in PostgreSQL ingress rule)."
 }
 
-variable "vcn_cidr" {
-  type        = string
-  description = "CIDR block of the VCN (used as source for SSH ingress rule)."
-  default     = "10.0.0.0/16"
-}
-
 variable "ssh_public_key" {
   type        = string
   description = "SSH public key to inject into the VM for remote access."
