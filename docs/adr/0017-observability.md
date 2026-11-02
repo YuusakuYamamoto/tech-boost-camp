@@ -22,7 +22,7 @@
 
 | アラート | 閾値 | 実装 |
 |---|---|---|
-| LB のバックエンド異常（実質的な全滅） | 異常バックエンド > 0 が 3 分継続 | Step 11 で実装（`oci_lbaas` / `unhealthyBackendServers`） |
+| LB のバックエンド異常（実質的な全滅） | 異常バックエンド > 0 が 3 分継続 | Step 11 で実装（`oci_lbaas` / `UnHealthyBackendServers`） |
 | VM のインフラ起因の停止 | `instance_status` > 0 が 5 分継続 | Step 11 で実装（`oci_compute_infrastructure_health`） |
 | 月間予算アラート | 予算（JPY 1500）の 50% / 80% / 100%、すべて実績ベース | Step 11 で実装 |
 | PostgreSQL VM のディスク使用率 | 80% 超過 | **Phase 8 へ。標準メトリックでは実装できない**（下記） |

@@ -96,6 +96,9 @@ resource "oci_budget_alert_rule" "actual" {
 # LB のメトリックはモニタリングの有効化が不要で、作成時点から利用できる。
 # Backend Set は各 1 台構成のため「異常なバックエンド > 0」が ADR-0017 の
 # 「OK 状態の Backend = 0」と同義。groupBy で 1 本が両方のセットを見る。
+# メトリックの実際の名前は UnHealthyBackendServers（H も大文字）。MQL は
+# 大文字小文字を区別しないことを実測で確認済みだが、oci monitoring metric list
+# が返す表記に合わせておく。
 # Docs: https://docs.oracle.com/iaas/Content/Balance/Reference/loadbalancermetrics.htm
 # Docs: https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/monitoring_alarm
 resource "oci_monitoring_alarm" "lb_backend_down" {
@@ -103,7 +106,7 @@ resource "oci_monitoring_alarm" "lb_backend_down" {
   metric_compartment_id = var.compartment_id
   display_name          = "${var.app_name}-lb-backend-down"
   namespace             = "oci_lbaas"
-  query                 = "unhealthyBackendServers[1m].groupBy(backendSetName).max() > 0"
+  query                 = "UnHealthyBackendServers[1m].groupBy(backendSetName).max() > 0"
   severity              = "CRITICAL"
   pending_duration      = "PT3M"
   is_enabled            = true

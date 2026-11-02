@@ -143,24 +143,6 @@ resource "oci_core_volume_attachment" "data" {
 
 # Docs: https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/core_network_security_group_security_rule
 
-# SSH: VCN 内からのアクセスを許可（OCI Cloud Shell / Bastion 経由）
-resource "oci_core_network_security_group_security_rule" "db_ssh_ingress" {
-  network_security_group_id = var.db_nsg_id
-  direction                 = "INGRESS"
-  protocol                  = "6"
-  description               = "Allow SSH from within VCN"
-
-  source      = var.vcn_cidr
-  source_type = "CIDR_BLOCK"
-
-  tcp_options {
-    destination_port_range {
-      min = 22
-      max = 22
-    }
-  }
-}
-
 # PostgreSQL: App NSG からのアクセスを許可
 resource "oci_core_network_security_group_security_rule" "db_postgres_ingress" {
   network_security_group_id = var.db_nsg_id

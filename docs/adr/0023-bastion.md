@@ -26,7 +26,7 @@ Step 10 の検証は「起動スクリプトが途中で失敗したら停止す
 - Bastion の名前は英数字のみ受け付けられるため、命名規約 `${app_name}-${role}` の例外として `tbcampbastion` とする
 - 接続元の制限（`client_cidr_block_allow_list`）は設けない。利用者の回線が固定 IP ではないため。接続には OCI の認可とセッションごとの SSH 鍵の双方を要するため、素通しにはならない
 - 接続先サブネットには、Bastion のプライベートエンドポイントから VM の 22 番ポートへの送信を許可する Security List を 1 つ追加する
-- VM 側の ingress は NSG で、Bastion のプライベートエンドポイントの IP アドレスのみに限定する。ただし DB 側の NSG には VCN 全体（`10.0.0.0/16`）からの 22 番を許可する既存ルール（`db_ssh_ingress`）が残っており、これを削除するまで DB については限定が成立しない。削除は Bastion の疎通確認後に別途行う
+- VM 側の ingress は NSG で、Bastion のプライベートエンドポイントの IP アドレスのみに限定する。DB 側の NSG に残っていた、VCN 全体（`10.0.0.0/16`）からの 22 番を許可する既存ルール（`db_ssh_ingress`）は、Bastion 経由で DB VM（`10.0.2.136`）に接続できることを確認したうえで 2026-11-03 に削除した。これにより、この限定はアプリ VM と DB VM の両方で成立している。削除に伴い不要になった `postgres_vm` モジュールの `vcn_cidr` 変数も、あわせて削除した
 
 ## Alternatives Considered
 
