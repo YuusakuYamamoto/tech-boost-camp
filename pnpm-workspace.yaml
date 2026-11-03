@@ -2,12 +2,13 @@ packages:
   - "apps/*"
   - "packages/*"
 
-# pnpm は依存パッケージのビルドスクリプトを既定で実行しない。
-# Prisma はインストール時にクエリエンジンを取得するため許可する
+# pnpm は依存パッケージのビルドスクリプトを既定で実行せず、
+# 許可も不許可も書かれていないものがあると install を失敗させる。
+# いずれも不要なため、明示的に不許可にする。
+# Prisma の schema engine は postinstall ではなく、CLI の初回実行時に取得される
 allowBuilds:
-  "@prisma/client": true
-  "@prisma/engines": true
-  prisma: true
+  "@prisma/engines": false
   esbuild: false
+  prisma: false
   sharp: false
   unrs-resolver: false

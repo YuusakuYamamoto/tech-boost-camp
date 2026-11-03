@@ -1,12 +1,12 @@
 generator client {
-  provider      = "prisma-client-js"
-  // arm64 向けのターゲット追加はデプロイ時の課題として分離済み。今は native のみ
-  binaryTargets = ["native"]
+  provider = "prisma-client"
+  // nest build の対象に含めるため src 配下に出力する。生成物はコミットしない
+  output   = "../src/generated/prisma"
 }
 
+// 接続 URL は prisma.config.ts に書く
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model Question {

@@ -1,4 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '../src/generated/prisma/client.js';
 
 // ローカル開発用の問題データ。すべて自作であり、既存の試験問題からの転記は含まない
 const questions = [
@@ -71,7 +72,9 @@ const questions = [
   },
 ];
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
+});
 
 async function main() {
   // ローカル専用のため、毎回全削除してから投入する。id も 1 から振り直す

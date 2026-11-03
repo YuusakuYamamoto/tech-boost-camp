@@ -35,3 +35,6 @@ dist/
 *.tsbuildinfo
 .env
 .env.local
+
+# Prisma Client の生成物（prisma generate で作る）
+apps/tbcamp-api/src/generated/
