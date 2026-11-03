@@ -1,0 +1,28 @@
+# ローカル開発専用の compose。
+# 本番の docker-compose.yml は Object Storage の tbcamp-config バケットにあり
+# Terraform 管理。このファイルとは別物であり、混同しないこと。
+
+services:
+  postgres:
+    image: postgres:18-bookworm
+    environment:
+      POSTGRES_DB: tbcamp
+      POSTGRES_USER: tbcamp
+      POSTGRES_PASSWORD: tbcamp_local_dev_password
+      # postgres 18 のイメージは /var/lib/postgresql/data への直接マウントを拒否するため、
+      # 本番の compose と同じくサブディレクトリを PGDATA にする
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      # ホストのループバックのみに公開する。
+      # ホスト側は 5432 を他のプロジェクトと取り合わないよう 5433 にしている
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tbcamp -d tbcamp"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres-data:
