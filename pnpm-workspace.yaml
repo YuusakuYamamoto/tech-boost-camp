@@ -1,0 +1,13 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+# pnpm は依存パッケージのビルドスクリプトを既定で実行しない。
+# Prisma はインストール時にクエリエンジンを取得するため許可する
+allowBuilds:
+  "@prisma/client": true
+  "@prisma/engines": true
+  prisma: true
+  esbuild: false
+  sharp: false
+  unrs-resolver: false
