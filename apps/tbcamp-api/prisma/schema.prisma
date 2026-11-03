@@ -1,0 +1,32 @@
+generator client {
+  provider      = "prisma-client-js"
+  // arm64 向けのターゲット追加はデプロイ時の課題として分離済み。今は native のみ
+  binaryTargets = ["native"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Question {
+  id          Int      @id @default(autoincrement())
+  body        String
+  explanation String
+  createdAt   DateTime @default(now()) @map("created_at")
+  choices     Choice[]
+
+  @@map("questions")
+}
+
+model Choice {
+  id         Int      @id @default(autoincrement())
+  questionId Int      @map("question_id")
+  body       String
+  isCorrect  Boolean  @default(false) @map("is_correct")
+  position   Int
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, position])
+  @@map("choices")
+}
