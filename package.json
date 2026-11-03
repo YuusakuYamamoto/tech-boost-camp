@@ -1,0 +1,11 @@
+{
+  "name": "tech-boost-camp",
+  "private": true,
+  "license": "MIT",
+  "packageManager": "pnpm@11.0.0",
+  "scripts": {
+    "dev:api": "pnpm --filter tbcamp-api dev",
+    "dev:web": "pnpm --filter tbcamp-web dev",
+    "build": "pnpm -r build"
+  }
+}

@@ -27,3 +27,14 @@ terraform/backend.hcl
 
 # mise
 .mise.local.toml
+
+# Node.js
+node_modules/
+.next/
+dist/
+*.tsbuildinfo
+.env
+.env.local
+
+# Prisma Client の生成物（prisma generate で作る）
+apps/tbcamp-api/src/generated/
