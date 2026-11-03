@@ -24,5 +24,42 @@ services:
       timeout: 5s
       retries: 10
 
+  api:
+    build:
+      context: .
+      dockerfile: apps/tbcamp-api/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://tbcamp:tbcamp_local_dev_password@postgres:5432/tbcamp?schema=public
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      # 本番のロードバランサと同じ /health を見る。イメージに curl は無いため Node で叩く
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4000/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/tbcamp-web/Dockerfile
+      args:
+        # rewrites の転送先は next build の時点で確定するため、実行時の環境変数ではなく
+        # ビルド引数で渡す
+        API_PROXY_TARGET: http://api:4000
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
 volumes:
   postgres-data:
