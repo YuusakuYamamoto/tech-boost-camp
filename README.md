@@ -18,7 +18,8 @@ pnpm install
 cp apps/tbcamp-api/.env.example apps/tbcamp-api/.env
 cp apps/tbcamp-web/.env.example apps/tbcamp-web/.env
 
-# 3. マイグレーションと seed を流す
+# 3. Prisma Client を生成し、マイグレーションと seed を流す
+pnpm --filter tbcamp-api exec prisma generate
 pnpm --filter tbcamp-api exec prisma migrate dev
 pnpm --filter tbcamp-api exec prisma db seed
 
