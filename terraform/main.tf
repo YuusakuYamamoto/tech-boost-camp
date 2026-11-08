@@ -124,6 +124,7 @@ module "app_vm" {
   namespace                 = module.object_storage.namespace
   config_bucket_name        = module.object_storage.config_bucket_name
   registry_domain           = local.registry_domain
+  image_tag                 = var.app_image_tag
   db_host                   = module.postgres_vm.private_ip
   db_password_secret_id     = module.vault.secret_ids["db-password"]
   session_secret_id         = module.vault.secret_ids["session-secret"]

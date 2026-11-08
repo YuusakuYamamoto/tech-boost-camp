@@ -121,10 +121,14 @@ resource "oci_core_instance" "this" {
 # 起動時に Instance Principal で取得する（postgres_vm と同じ）。
 # Docs: https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/objectstorage_object
 resource "oci_objectstorage_object" "compose" {
-  namespace    = var.namespace
-  bucket       = var.config_bucket_name
-  object       = "app/docker-compose.yml"
-  content      = file("${path.module}/files/docker-compose.yml")
+  namespace = var.namespace
+  bucket    = var.config_bucket_name
+  object    = "app/docker-compose.yml"
+  content = templatefile("${path.module}/files/docker-compose.yml", {
+    registry_domain = var.registry_domain
+    namespace       = var.namespace
+    image_tag       = var.image_tag
+  })
   content_type = "application/yaml"
 }
 

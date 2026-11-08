@@ -97,6 +97,11 @@ variable "registry_domain" {
   description = "Domain of the OCIR registry the images are pulled from (e.g., nrt.ocir.io)."
 }
 
+variable "image_tag" {
+  type        = string
+  description = "Tag of the frontend and backend images in OCIR (the short commit hash they were built from)."
+}
+
 variable "db_host" {
   type        = string
   description = "Private IP of the PostgreSQL VM."

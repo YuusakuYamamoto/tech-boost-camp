@@ -36,3 +36,9 @@ variable "budget_amount" {
   type        = number
   description = "Monthly budget as a whole number, in the currency of the tenancy's rate card (JPY for this tenancy)."
 }
+
+# latest は使わない。どのイメージが動いているかを後から特定できるようにするため。
+variable "app_image_tag" {
+  type        = string
+  description = "Tag of the application images in OCIR to deploy (the short commit hash they were built from, e.g., f47dd37)."
+}
