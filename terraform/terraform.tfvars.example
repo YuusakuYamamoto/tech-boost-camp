@@ -24,3 +24,8 @@ notification_email = "you@example.com"
 # This tenancy's rate card is JPY (the Console shows "予算金額(JPY)"),
 # so 1500 is roughly USD 10. It is NOT always USD — check before changing.
 budget_amount = 1500
+
+# Tag of the application images in OCIR to deploy.
+# Use the short commit hash the images were built from (git rev-parse --short HEAD),
+# not "latest", so you can tell which build is running.
+app_image_tag = "f47dd37"
