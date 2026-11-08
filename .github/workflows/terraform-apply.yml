@@ -40,6 +40,7 @@ jobs:
       TF_VAR_ssh_public_key: ${{ vars.TF_VAR_SSH_PUBLIC_KEY }}
       TF_VAR_notification_email: ${{ vars.TF_VAR_NOTIFICATION_EMAIL }}
       TF_VAR_budget_amount: ${{ vars.TF_VAR_BUDGET_AMOUNT }}
+      TF_VAR_app_image_tag: ${{ vars.TF_VAR_APP_IMAGE_TAG }}
 
     steps:
       - name: Checkout
