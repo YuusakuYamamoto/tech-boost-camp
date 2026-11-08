@@ -41,4 +41,12 @@ variable "budget_amount" {
 variable "app_image_tag" {
   type        = string
   description = "Tag of the application images in OCIR to deploy (the short commit hash they were built from, e.g., f47dd37)."
+
+  # GitHub Variables が未登録だと、ワークフローからは空文字が渡る。空文字も
+  # 値として受け付けられるため、compose の image がタグ無しのまま plan / apply が
+  # 成功し、VM 上の pull で初めて失敗する。ここで止める。
+  validation {
+    condition     = length(var.app_image_tag) > 0 && trimspace(var.app_image_tag) == var.app_image_tag
+    error_message = "app_image_tag must be a non-empty image tag without leading or trailing whitespace. Check the TF_VAR_APP_IMAGE_TAG repository variable."
+  }
 }
