@@ -92,6 +92,11 @@ variable "config_bucket_name" {
   description = "Name of the bucket that stores docker-compose.yml."
 }
 
+variable "registry_domain" {
+  type        = string
+  description = "Domain of the OCIR registry the images are pulled from (e.g., nrt.ocir.io)."
+}
+
 variable "db_host" {
   type        = string
   description = "Private IP of the PostgreSQL VM."

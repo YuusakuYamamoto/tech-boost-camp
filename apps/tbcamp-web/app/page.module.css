@@ -1,0 +1,97 @@
+.main {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.body {
+  font-size: 1.125rem;
+}
+
+.choices {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.choice {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--border);
+  border-radius: 0.5rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.choice:disabled {
+  cursor: default;
+}
+
+.choice:not(:disabled):hover {
+  border-color: var(--muted);
+}
+
+.correct {
+  border-color: var(--correct);
+  background: var(--correct-bg);
+}
+
+.incorrect {
+  border-color: var(--incorrect);
+  background: var(--incorrect-bg);
+}
+
+.badge {
+  color: var(--correct);
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.verdictCorrect,
+.verdictIncorrect {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.verdictCorrect {
+  color: var(--correct);
+}
+
+.verdictIncorrect {
+  color: var(--incorrect);
+}
+
+.next {
+  align-self: flex-start;
+  padding: 0.5rem 1.25rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: var(--foreground);
+  color: var(--background);
+  font: inherit;
+  cursor: pointer;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.error {
+  color: var(--incorrect);
+}

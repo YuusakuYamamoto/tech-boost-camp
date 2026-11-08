@@ -2,6 +2,9 @@ locals {
   app_name    = "tbcamp"
   domain_name = "y12u.com"
 
+  # OCIR のレジストリのドメイン。<リージョンキー>.ocir.io の形で、ap-tokyo-1 は nrt
+  registry_domain = "nrt.ocir.io"
+
   # CA 用鍵 / CA / 証明書はいずれもスケジュール削除で、削除猶予中は同名で
   # 作り直せない。作り直すときはこの値をインクリメントして 3 つまとめて
   # 世代を揃える。
@@ -120,6 +123,7 @@ module "app_vm" {
   ssh_public_key            = var.ssh_public_key
   namespace                 = module.object_storage.namespace
   config_bucket_name        = module.object_storage.config_bucket_name
+  registry_domain           = local.registry_domain
   db_host                   = module.postgres_vm.private_ip
   db_password_secret_id     = module.vault.secret_ids["db-password"]
   session_secret_id         = module.vault.secret_ids["session-secret"]

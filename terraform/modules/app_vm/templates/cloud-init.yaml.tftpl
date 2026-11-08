@@ -4,13 +4,16 @@ package_upgrade: false
 
 packages:
   - dnf-plugins-core
+  # bootstrap-app.sh が OCIR のトークン応答（JSON）をパースするのに使う
+  - jq
 
 write_files:
-  - path: /opt/scripts/bootstrap-app.sh
+  # 起動スクリプトの本体は Object Storage に置き、これが起動のたびに取得して実行する
+  - path: /opt/scripts/run-bootstrap.sh
     permissions: '0755'
     owner: root:root
     encoding: b64
-    content: ${bootstrap_b64}
+    content: ${run_bootstrap_b64}
 
   - path: /etc/systemd/system/${app_name}-app-bootstrap.service
     permissions: '0644'
@@ -29,7 +32,7 @@ write_files:
       [Service]
       Type=oneshot
       RemainAfterExit=yes
-      ExecStart=/opt/scripts/bootstrap-app.sh
+      ExecStart=/opt/scripts/run-bootstrap.sh
       Restart=on-failure
       RestartSec=30s
       StandardOutput=journal

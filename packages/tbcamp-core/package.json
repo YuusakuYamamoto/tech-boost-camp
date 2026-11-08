@@ -1,0 +1,15 @@
+{
+  "name": "tbcamp-core",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts"
+    }
+  },
+  "devDependencies": {
+    "tbcamp-config": "workspace:*"
+  }
+}
