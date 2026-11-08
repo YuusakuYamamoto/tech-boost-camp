@@ -141,6 +141,7 @@ resource "oci_objectstorage_object" "bootstrap_script" {
     db_password_secret_id = var.db_password_secret_id
     session_secret_id     = var.session_secret_id
     db_host               = var.db_host
+    registry_domain       = var.registry_domain
   })
   content_type = "text/x-shellscript"
 }
