@@ -22,18 +22,18 @@ data "oci_core_images" "ol9_arm" {
 
 # --- cloud-init ---
 
+# cloud-init には変更の頻度が低い薄い起動役だけを埋め込む。metadata は ForceNew の
+# ため、ここに入れたものを変えると VM が作り直される。起動スクリプトの本体は
+# Object Storage に置く（oci_objectstorage_object.bootstrap_script）。
 locals {
-  bootstrap_script = templatefile("${path.module}/scripts/bootstrap-app.sh", {
-    namespace             = var.namespace
-    config_bucket         = var.config_bucket_name
-    db_password_secret_id = var.db_password_secret_id
-    session_secret_id     = var.session_secret_id
-    db_host               = var.db_host
+  run_bootstrap_script = templatefile("${path.module}/scripts/run-bootstrap.sh", {
+    namespace     = var.namespace
+    config_bucket = var.config_bucket_name
   })
 
   cloud_init = templatefile("${path.module}/templates/cloud-init.yaml.tftpl", {
-    bootstrap_b64 = base64encode(local.bootstrap_script)
-    app_name      = var.app_name
+    run_bootstrap_b64 = base64encode(local.run_bootstrap_script)
+    app_name          = var.app_name
   })
 }
 
@@ -92,7 +92,11 @@ resource "oci_core_instance" "this" {
   # Dynamic Group のマッチングルールが参照する（ADR-0022）。
   defined_tags = var.defined_tags
 
-  depends_on = [oci_objectstorage_object.compose]
+  # 初回起動時に起動役がこの 2 つを取得するため、VM より先に置いておく
+  depends_on = [
+    oci_objectstorage_object.bootstrap_script,
+    oci_objectstorage_object.compose,
+  ]
 
   # data.oci_core_images は常に最新を返すため、Oracle Linux の月次更新のたびに
   # source_id のドリフトが発生する。source_id の変更はブートボリュームの置き換えを
@@ -122,6 +126,24 @@ resource "oci_objectstorage_object" "compose" {
   object       = "app/docker-compose.yml"
   content      = file("${path.module}/files/docker-compose.yml")
   content_type = "application/yaml"
+}
+
+# 起動スクリプトも同じ理由で Object Storage に置く。cloud-init の起動役が
+# サービスの起動のたびに取得して実行する。
+# Docs: https://registry.terraform.io/providers/oracle/oci/latest/docs/resources/objectstorage_object
+resource "oci_objectstorage_object" "bootstrap_script" {
+  namespace = var.namespace
+  bucket    = var.config_bucket_name
+  object    = "app/bootstrap-app.sh"
+  content = templatefile("${path.module}/scripts/bootstrap-app.sh", {
+    namespace             = var.namespace
+    config_bucket         = var.config_bucket_name
+    db_password_secret_id = var.db_password_secret_id
+    session_secret_id     = var.session_secret_id
+    db_host               = var.db_host
+    registry_domain       = var.registry_domain
+  })
+  content_type = "text/x-shellscript"
 }
 
 # --- LB Backend 登録 ---
